@@ -9,7 +9,8 @@ import { useCallback, useMemo, useState } from "react"
  * <FlatList data={list.items} onEndReached={list.loadMore} refreshing={list.refreshing} onRefresh={list.refresh} />
  */
 export function useInfiniteList<T, K extends string>(
-  query: { queryKey: readonly unknown[]; queryFn: (ctx: { pageParam: number }) => Promise<any> },
+  // query-key-factory 가 queryFn 타입을 감추므로 느슨하게 받는다.
+  query: { queryKey: readonly unknown[]; queryFn?: any },
   key: K,
   options?: { enabled?: boolean },
 ) {

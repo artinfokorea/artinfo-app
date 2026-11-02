@@ -1,0 +1,34 @@
+import { router, Stack } from "expo-router"
+import React, { useState } from "react"
+
+import { getErrorMessage } from "@/components/auth/ControlledField"
+import { FormScreen } from "@/components/auth/FormScreen"
+import { InquiryForm, InquiryFormData } from "@/components/inquiry/InquiryForm"
+import { useToast } from "@/components/ui/Toast"
+import { createInquiry } from "@/services/inquries"
+
+/** 웹 app/(site)/inquiry */
+export default function InquiryScreen() {
+  const [isLoading, setIsLoading] = useState(false)
+  const { successToast, errorToast } = useToast()
+
+  const handleInquiry = async (payload: InquiryFormData) => {
+    try {
+      setIsLoading(true)
+      await createInquiry(payload)
+      successToast("문의가 성공적으로 등록되었습니다.")
+      router.navigate("/")
+    } catch (error: any) {
+      errorToast(getErrorMessage(error, "문의 등록에 실패했습니다."))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <FormScreen>
+      <Stack.Screen options={{ title: "문의" }} />
+      <InquiryForm handleInquiry={handleInquiry} isLoading={isLoading} />
+    </FormScreen>
+  )
+}
