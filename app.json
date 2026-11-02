@@ -1,14 +1,21 @@
 {
   "expo": {
-    "name": "artinfo-app",
+    "name": "ArtInfo",
     "slug": "artinfo-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "artinfoapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "artinfo",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.artinfokorea.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "게시글, 공고, 프로필 이미지를 올리기 위해 사진 보관함에 접근합니다.",
+        "NSCameraUsageDescription": "프로필 이미지를 촬영하기 위해 카메라에 접근합니다.",
+        "CFBundleDisplayName": "아트인포"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,9 +35,16 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "게시글, 공고, 프로필 이미지를 올리기 위해 사진 보관함에 접근합니다."
         }
       ]
     ],
