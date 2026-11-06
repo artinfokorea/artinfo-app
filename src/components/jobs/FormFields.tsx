@@ -20,42 +20,58 @@ export const UnderlineInput = ({ error, style, ...props }: TextInputProps & { er
 export const FieldError = ({ message }: { message?: string }) =>
   message ? <Text style={styles.error}>{message}</Text> : null
 
-/** "+ 전공" 버튼과 선택된 전공 뱃지 */
+/**
+ * "+ 전공" 버튼과 선택된 전공 뱃지 (웹 FullTimeJobForm 과 같은 배치).
+ * 전공 개수 제한이 없어 고른 전공을 모두 줄바꿈으로 보여주고, onRemove 를 주면 뱃지의 X 로 바로 뺄 수 있다.
+ * 버튼 옆에는 비었을 때 emptyText, 골랐을 때 "N개 선택" 을 보여준다 (오류가 있으면 오류 문구만).
+ */
 export const MajorPickerRow = ({
   majors,
   onPress,
+  onRemove,
   emptyText,
   error,
-  collapse = true,
 }: {
   majors: MAJOR[]
   onPress: () => void
+  onRemove?: (major: MAJOR) => void
   emptyText: string
   error?: string
-  /** true 면 웹처럼 "OO 외 N" 한 개로 줄여 보여준다 */
-  collapse?: boolean
 }) => (
-  <View style={{ marginVertical: 8 }}>
+  <View style={{ marginVertical: 8, gap: 8 }}>
     <View style={styles.majorRow}>
       <Pressable onPress={onPress} style={styles.outlineButton}>
         <Icon name="plus" size={13} color={colors.main} />
         <Text style={styles.outlineButtonText}>전공</Text>
       </Pressable>
-      {majors.length === 0 && !error ? <Text style={styles.hint}>{emptyText}</Text> : null}
-      {collapse
-        ? majors.slice(0, 1).map(major => (
-            <View key={major.id} style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {majors.length > 1 ? `${major.koName} 외 ${majors.length - 1}` : major.koName}
-              </Text>
-            </View>
-          ))
-        : majors.map(major => (
-            <View key={major.id} style={styles.badge}>
-              <Text style={styles.badgeText}>{major.koName}</Text>
-            </View>
-          ))}
+      {error ? null : majors.length === 0 ? (
+        <Text style={styles.hint}>{emptyText}</Text>
+      ) : (
+        <Text style={styles.hint}>
+          <Text style={styles.hintCount}>{majors.length}</Text>개 선택
+        </Text>
+      )}
     </View>
+    {majors.length > 0 ? (
+      <View style={styles.badges} accessibilityLabel="선택한 전공">
+        {majors.map(major => (
+          <View key={major.id} style={styles.badge}>
+            <Text style={styles.badgeText}>{major.koName}</Text>
+            {onRemove ? (
+              <Pressable
+                onPress={() => onRemove(major)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={`${major.koName} 삭제`}
+                style={styles.badgeRemove}
+              >
+                <Icon name="xmark" size={10} color={colors.white} weight="bold" />
+              </Pressable>
+            ) : null}
+          </View>
+        ))}
+      </View>
+    ) : null}
     <FieldError message={error} />
   </View>
 )
@@ -96,6 +112,17 @@ const styles = StyleSheet.create({
   },
   outlineButtonText: { color: colors.main, fontSize: 14, fontWeight: "500" },
   hint: { fontSize: 13, color: colors.silver, flexShrink: 1 },
-  badge: { height: 32, justifyContent: "center", paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.main },
+  hintCount: { color: colors.main, fontWeight: "700" },
+  badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  badge: {
+    height: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: colors.main,
+  },
   badgeText: { color: colors.white, fontSize: 13, fontWeight: "600" },
+  badgeRemove: { padding: 2, borderRadius: 999 },
 })

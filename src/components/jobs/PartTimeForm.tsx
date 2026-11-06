@@ -248,9 +248,9 @@ export const PartTimeForm = ({ onSubmit, isLoading, partTime }: Props) => {
           <MajorPickerRow
             majors={majors}
             onPress={() => setIsMajorOpen(true)}
+            onRemove={toggleMajor}
             emptyText="전공을 선택해주세요."
             error={errors.majors?.message as string | undefined}
-            collapse={false}
           />
         </View>
 

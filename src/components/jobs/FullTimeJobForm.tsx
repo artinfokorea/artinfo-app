@@ -130,7 +130,8 @@ export const FullTimeJobForm = ({ onSubmit, isLoading, job, withImage = true }: 
         <MajorPickerRow
           majors={majors}
           onPress={() => setIsMajorOpen(true)}
-          emptyText="전공은 최대 3개까지 선택 가능합니다."
+          onRemove={toggleMajor}
+          emptyText="모집하는 전공을 선택해주세요."
           error={errors.majors?.message as string | undefined}
         />
 
@@ -185,7 +186,6 @@ export const FullTimeJobForm = ({ onSubmit, isLoading, job, withImage = true }: 
         onClose={() => setIsMajorOpen(false)}
         selectedMajors={majors}
         onToggle={toggleMajor}
-        max={3}
       />
     </KeyboardAvoidingView>
   )
