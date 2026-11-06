@@ -77,8 +77,8 @@ jobs:
               export_method: 'app-store',
               output_directory: '.',
               output_name: 'artinfo.ipa',
+              # gym 은 xcargs 를 archive 와 exportArchive 양쪽에 넘긴다 — export_xcargs 까지 주면 인증 옵션이 중복돼 실패
               xcargs: auth,
-              export_xcargs: auth,
               export_options: { signingStyle: 'automatic', teamID: ENV['TEAM_ID'], uploadSymbols: true },
             )
           end

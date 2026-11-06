@@ -44,3 +44,6 @@ example
 
 # App Store 스크린샷 원본 (용량) — ASC 에 올린 뒤 로컬 보관
 store/screenshots/
+
+# 로컬 fastlane 실행 산출물
+fastlane/
