@@ -6,8 +6,8 @@ import { Icon } from "@/components/ui/Icon"
 import { colors } from "@/constants/theme"
 
 /**
- * 웹 하단 네비게이션(BottomNavigation): 채용 · 소통 · 기획 · 레슨 · 공연.
- * 앱에서는 홈 탭을 추가하고, 기획/문의/내 정보는 헤더 햄버거 메뉴(/menu)로 옮겼다.
+ * 웹 하단 네비게이션(BottomNavigation): 채용 · 뉴스 · 나눔 · 레슨 · 공연.
+ * 앱에서는 홈 탭을 추가하고 뉴스·나눔을 소통 탭으로 묶었으며, 문의/내 정보는 헤더 햄버거 메뉴(/menu)로 옮겼다.
  */
 export default function TabLayout() {
   return (

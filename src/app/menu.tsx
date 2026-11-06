@@ -3,6 +3,7 @@ import React from "react"
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { FallbackImage } from "@/components/ui/FallbackImage"
+import { LegalLinks } from "@/components/auth/LegalLinks"
 import { Icon } from "@/components/ui/Icon"
 import { Separator } from "@/components/ui/primitives"
 import { colors } from "@/constants/theme"
@@ -14,7 +15,6 @@ const MENUS: { label: string; href: Href; tab?: boolean }[] = [
   { label: "레슨", href: "/lessons", tab: true },
   { label: "공연", href: "/performances", tab: true },
   { label: "뉴스", href: "/community?tab=news", tab: true },
-  { label: "기획", href: "/performance-inquiry" },
   { label: "문의", href: "/inquiry" },
 ]
 
@@ -70,14 +70,15 @@ export default function MenuScreen() {
       <Pressable style={styles.item} onPress={() => (isLoggedIn ? go("/my-profile") : go("/auth/sign-in"))}>
         <Text style={styles.itemText}>내 정보</Text>
       </Pressable>
-      <Pressable style={styles.item} onPress={() => (isLoggedIn ? go("/my-activities") : go("/auth/sign-in"))}>
-        <Text style={styles.itemText}>내 활동</Text>
-      </Pressable>
       <Pressable style={styles.item} onPress={handleSign}>
         <Text style={[styles.itemText, { fontWeight: "800" }]}>
           {isLoggedIn ? "로그아웃" : "로그인"}
         </Text>
       </Pressable>
+
+      <View style={{ marginTop: 32 }}>
+        <LegalLinks />
+      </View>
     </ScrollView>
   )
 }

@@ -5,8 +5,9 @@ import React, { useState } from "react"
 import { Controller, useFieldArray, useForm } from "react-hook-form"
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 
-import { FieldError, formStyles, MajorPickerRow, OutlineButton, UnderlineInput } from "@/components/jobs/FormFields"
+import { AddressField, FieldError, formStyles, MajorPickerRow, OutlineButton, UnderlineInput } from "@/components/jobs/FormFields"
 import { MajorSelectSheet } from "@/components/jobs/MajorSelectSheet"
+import { DateField } from "@/components/ui/DateField"
 import { Icon } from "@/components/ui/Icon"
 import { Button } from "@/components/ui/primitives"
 import { RichEditor } from "@/components/ui/RichEditor"
@@ -153,10 +154,10 @@ export const PartTimeForm = ({ onSubmit, isLoading, partTime }: Props) => {
             control={control}
             name="address"
             render={({ field }) => (
-              <UnderlineInput
+              <AddressField
                 value={field.value}
-                onChangeText={field.onChange}
-                placeholder="주소를 입력해주세요. 예) 서울 종로구 세종대로 175"
+                onChange={field.onChange}
+                placeholder="주소를 검색해주세요."
                 error={errors.address?.message}
               />
             )}
@@ -184,14 +185,12 @@ export const PartTimeForm = ({ onSubmit, isLoading, partTime }: Props) => {
                   control={control}
                   name={`schedules.${index}.date`}
                   render={({ field }) => (
-                    <TextInput
+                    <DateField
+                      mode="date"
+                      compact
                       value={field.value}
-                      onChangeText={field.onChange}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.gray400}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={10}
-                      style={[styles.scheduleInput, { width: 116 }]}
+                      onChange={field.onChange}
+                      containerStyle={{ width: 116 }}
                     />
                   )}
                 />
@@ -199,14 +198,12 @@ export const PartTimeForm = ({ onSubmit, isLoading, partTime }: Props) => {
                   control={control}
                   name={`schedules.${index}.startTime`}
                   render={({ field }) => (
-                    <TextInput
+                    <DateField
+                      mode="time"
+                      compact
                       value={field.value}
-                      onChangeText={field.onChange}
-                      placeholder="HH:mm"
-                      placeholderTextColor={colors.gray400}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={5}
-                      style={[styles.scheduleInput, { width: 70 }]}
+                      onChange={field.onChange}
+                      containerStyle={{ width: 72 }}
                     />
                   )}
                 />
@@ -215,14 +212,12 @@ export const PartTimeForm = ({ onSubmit, isLoading, partTime }: Props) => {
                   control={control}
                   name={`schedules.${index}.endTime`}
                   render={({ field }) => (
-                    <TextInput
+                    <DateField
+                      mode="time"
+                      compact
                       value={field.value}
-                      onChangeText={field.onChange}
-                      placeholder="HH:mm"
-                      placeholderTextColor={colors.gray400}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={5}
-                      style={[styles.scheduleInput, { width: 70 }]}
+                      onChange={field.onChange}
+                      containerStyle={{ width: 72 }}
                     />
                   )}
                 />

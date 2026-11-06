@@ -1,27 +1,42 @@
 import { useQuery } from "@tanstack/react-query"
 import { router } from "expo-router"
 import React, { useRef, useState } from "react"
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native"
+import { FlatList, RefreshControl, View } from "react-native"
 
-import { PostCard } from "@/components/posts/PostCard"
-import { TopPostsModal } from "@/components/posts/TopPostsModal"
 import { FloatingButtons } from "@/components/posts/FloatingButtons"
+import { PostCard } from "@/components/posts/PostCard"
+import { TopPosts } from "@/components/posts/TopPosts"
+import { ListPageHeader } from "@/components/ui/ListPageHeader"
+import { FilterGroup, FilterSelection, ListToolbar } from "@/components/ui/ListToolbar"
 import { EmptyDataMessage, Loading } from "@/components/ui/primitives"
-import { SearchBar } from "@/components/ui/SearchBar"
 import { colors } from "@/constants/theme"
 import { useInfiniteList } from "@/hooks/useInfiniteList"
+import { useBlockedUserIds } from "@/hooks/useModeration"
 import { useRequireAuth } from "@/lib/auth"
 import { queries } from "@/lib/queries"
 import { Post, PostCategory, PostCategoryLabel } from "@/types/posts"
 
-/** 웹 app/(site)/posts/page.tsx (모바일 레이아웃) */
+// API 가 카테고리를 하나만 받는다
+const CATEGORY_GROUPS: FilterGroup[] = [
+  {
+    param: "category",
+    name: "카테고리",
+    options: Object.entries(PostCategoryLabel).map(([value, label]) => ({ label, value })),
+    single: true,
+  },
+]
+
+const ListSeparator = () => <View style={{ height: 1, marginHorizontal: 16, backgroundColor: colors.surface }} />
+
+/** 웹 app/(site)/posts/page.tsx — 제목 + "+ 글쓰기", 검색창 + 카테고리 필터, 인기 글 박스, 가벼운 목록 */
 export const PostListView = () => {
   const [keyword, setKeyword] = useState("")
-  const [category, setCategory] = useState<PostCategory | undefined>()
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [isTopPostsOpen, setIsTopPostsOpen] = useState(false)
+  const [selected, setSelected] = useState<FilterSelection>({})
   const listRef = useRef<FlatList<Post>>(null)
   const requireAuth = useRequireAuth()
+  const blockedUserIds = useBlockedUserIds()
+
+  const category = selected.category?.[0] as PostCategory | undefined
 
   const { data: popularPosts } = useQuery(queries.posts.popular())
 
@@ -31,52 +46,21 @@ export const PostListView = () => {
     "posts",
   )
 
-  const selectCategory = (next: PostCategory | "ALL") => {
-    setCategory(next === "ALL" ? undefined : next)
-    setIsFilterOpen(false)
-  }
-
   const header = (
-    <View>
-      <View style={styles.searchArea}>
-        <Text style={styles.headline}>여러분의 이야기를 나누어주세요.</Text>
-        <SearchBar
-          value={keyword}
-          onSubmit={setKeyword}
-          placeholder="제목, 내용, 글쓴이 등을 검색해보세요."
-        />
-      </View>
-
-      {/* 웹 PostMobileFilterTabs */}
-      <View style={styles.filterBox}>
-        <View style={styles.filterTabs}>
-          <Pressable
-            style={[styles.filterTab, isFilterOpen && { backgroundColor: colors.whitesmoke }]}
-            onPress={() => setIsFilterOpen(prev => !prev)}
-          >
-            <Text style={styles.filterTabText}>
-              나눔{category ? ` · ${PostCategoryLabel[category]}` : ""}
-            </Text>
-          </Pressable>
-          <Pressable style={styles.filterTab} onPress={() => setIsTopPostsOpen(true)}>
-            <Text style={styles.filterTabText}>Top Stories</Text>
-          </Pressable>
-        </View>
-        {isFilterOpen ? (
-          <View style={styles.categoryList}>
-            {(["ALL", ...Object.values(PostCategory)] as const).map(key => {
-              const selected = key === "ALL" ? !category : category === key
-              return (
-                <Pressable key={key} style={styles.categoryItem} onPress={() => selectCategory(key)}>
-                  <Text style={[styles.categoryText, selected && { color: colors.main }]}>
-                    {key === "ALL" ? "전체" : PostCategoryLabel[key]}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
-        ) : null}
-      </View>
+    <View style={{ marginBottom: 8 }}>
+      <ListPageHeader
+        title="나눔"
+        action={{ label: "글쓰기", onPress: () => requireAuth() && router.push("/posts/create") }}
+      />
+      <ListToolbar
+        searchPlaceholder="제목, 내용, 글쓴이 검색"
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        groups={CATEGORY_GROUPS}
+        selected={selected}
+        onSelectedChange={setSelected}
+      />
+      <TopPosts posts={popularPosts?.posts} />
     </View>
   )
 
@@ -84,44 +68,19 @@ export const PostListView = () => {
     <View style={{ flex: 1 }}>
       <FlatList
         ref={listRef}
-        data={list.items}
+        data={list.items.filter(post => !blockedUserIds.has(post.authorId))}
         keyExtractor={item => String(item.id)}
         renderItem={({ item }) => <PostCard post={item} />}
+        ItemSeparatorComponent={ListSeparator}
         ListHeaderComponent={header}
-        ListEmptyComponent={list.isLoading ? <Loading /> : <EmptyDataMessage />}
+        ListEmptyComponent={list.isLoading ? <Loading /> : <EmptyDataMessage message="조건에 맞는 글이 없어요." />}
         ListFooterComponent={list.isFetchingNextPage ? <Loading /> : <View style={{ height: 96 }} />}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={list.refreshing} onRefresh={list.refresh} />}
       />
-      <FloatingButtons
-        onScrollTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
-        onAdd={() => requireAuth() && router.push("/posts/create")}
-      />
-      <TopPostsModal
-        visible={isTopPostsOpen}
-        posts={popularPosts?.posts}
-        onClose={() => setIsTopPostsOpen(false)}
-      />
+      <FloatingButtons onScrollTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })} />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  searchArea: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 16, gap: 10, alignItems: "center" },
-  headline: { fontSize: 17, fontWeight: "700", color: colors.black },
-  filterBox: {
-    marginHorizontal: 16,
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: colors.gray200,
-    borderRadius: 4,
-  },
-  filterTabs: { flexDirection: "row" },
-  filterTab: { flex: 1, paddingVertical: 9, alignItems: "center", borderRadius: 4 },
-  filterTabText: { fontSize: 14, color: colors.main },
-  categoryList: { paddingHorizontal: 8, paddingVertical: 12, gap: 2 },
-  categoryItem: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  categoryText: { fontWeight: "600", color: colors.coolgray, fontSize: 15 },
-})

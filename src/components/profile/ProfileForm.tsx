@@ -1,12 +1,13 @@
 import { yupResolver } from "@hookform/resolvers/yup"
 import { Image } from "expo-image"
 import React, { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native"
 import * as yup from "yup"
 
 import { ControlledField } from "@/components/auth/ControlledField"
 import { MajorSheet } from "@/components/profile/MajorSheet"
+import { DateField } from "@/components/ui/DateField"
 import { FallbackImage } from "@/components/ui/FallbackImage"
 import { Icon } from "@/components/ui/Icon"
 import { pickAndUploadImage } from "@/components/ui/ImagePickerField"
@@ -39,14 +40,6 @@ const icons = {
   bachelor: require("@/assets/images/icon-bachelor.png"),
   master: require("@/assets/images/icon-master.png"),
   doctor: require("@/assets/images/icon-doctor.png"),
-}
-
-/** YYYYMMDD 숫자 입력을 YYYY-MM-DD 로 (웹의 <input type="date"> 대체) */
-const maskBirth = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, 8)
-  if (digits.length <= 4) return digits
-  if (digits.length <= 6) return `${digits.slice(0, 4)}-${digits.slice(4)}`
-  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`
 }
 
 const schoolName = (user: USER | undefined, type: SchoolType) =>
@@ -236,14 +229,19 @@ export const ProfileForm = ({
         <View style={styles.infoRow}>
           <Icon name="calendar" size={22} color={colors.gray800} style={{ marginHorizontal: 1 }} />
           {isUpdateForm ? (
-            <ControlledField
+            <Controller
               control={control}
               name="birth"
-              placeholder="1945-08-15"
-              keyboardType="number-pad"
-              maxLength={10}
-              format={maskBirth}
-              containerStyle={{ flex: 1 }}
+              render={({ field, fieldState }) => (
+                <DateField
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="1945-08-15"
+                  maximumDate={new Date()}
+                  error={fieldState.error?.message}
+                  containerStyle={{ flex: 1 }}
+                />
+              )}
             />
           ) : (
             <Text style={styles.infoText}>{filter.YYYYMMDD(user?.birth, "YYYY-MM-DD")}</Text>

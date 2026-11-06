@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { KeyboardAvoidingView, ScrollView, Text, View } from "react-native"
 
-import { FieldError, formStyles, MajorPickerRow, UnderlineInput } from "@/components/jobs/FormFields"
+import { AddressField, FieldError, formStyles, MajorPickerRow, UnderlineInput } from "@/components/jobs/FormFields"
 import { MajorSelectSheet } from "@/components/jobs/MajorSelectSheet"
 import { ImagePickerField } from "@/components/ui/ImagePickerField"
 import { Button } from "@/components/ui/primitives"
@@ -139,10 +139,10 @@ export const FullTimeJobForm = ({ onSubmit, isLoading, job, withImage = true }: 
           control={control}
           name="address"
           render={({ field }) => (
-            <UnderlineInput
+            <AddressField
               value={field.value}
-              onChangeText={field.onChange}
-              placeholder="주소를 입력해주세요. 예) 서울 종로구 세종대로 175"
+              onChange={field.onChange}
+              placeholder="주소를 검색해주세요."
               error={errors.address?.message}
             />
           )}

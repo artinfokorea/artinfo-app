@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import React from "react"
-import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native"
+import { ActionSheetIOS, Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { CommentContainer } from "@/components/comments/CommentContainer"
 import { ItemManageBox } from "@/components/posts/ItemManageBox"
@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/Icon"
 import { EmptyDataMessage, Loading, Separator } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
+import { useModeration } from "@/hooks/useModeration"
 import { useAuth } from "@/lib/auth"
 import filters from "@/lib/filters"
 import { queries } from "@/lib/queries"
@@ -26,6 +27,7 @@ export default function PostDetailScreen() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const { successToast, errorToast } = useToast()
+  const { report, block } = useModeration()
 
   const { data: post, isLoading } = useQuery({
     ...queries.posts.detail(postId),
@@ -62,6 +64,18 @@ export default function PostDetailScreen() {
 
   const isAuthor = !!user && user.id === post.authorId
 
+  /** 남의 글: 신고·차단 메뉴 (App Store 1.2 UGC) */
+  const openModerationMenu = () => {
+    const options = ["신고", "이 사용자 차단", "취소"]
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex: 2, destructiveButtonIndex: 1 },
+      index => {
+        if (index === 0) report("POST", post.id)
+        if (index === 1) block(post.authorId, post.authorName)
+      },
+    )
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={100}>
       <Stack.Screen options={{ title: "나눔" }} />
@@ -96,7 +110,11 @@ export default function PostDetailScreen() {
               onEdit={() => router.push(`/posts/create?postId=${post.id}`)}
               onDelete={handleDelete}
             />
-          ) : null}
+          ) : (
+            <Pressable style={styles.moreButton} onPress={openModerationMenu} accessibilityLabel="신고 또는 차단" hitSlop={6}>
+              <Icon name="ellipsis" size={18} color={colors.gray700} />
+            </Pressable>
+          )}
         </View>
 
         <HtmlContent html={post.contents} style={{ marginVertical: 32 }} />
@@ -120,6 +138,7 @@ export default function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  moreButton: { borderWidth: 2, borderColor: colors.whitesmoke, borderRadius: 8, padding: 8 },
   container: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 80 },
   breadcrumb: { flexDirection: "row", alignItems: "center", gap: 6 },
   breadcrumbLink: { fontSize: 16, color: colors.gray500 },

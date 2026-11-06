@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
 import { queries } from "@/lib/queries"
 import { createComment, deleteComment, updateComment } from "@/services/comments"
+import { useBlockedUserIds } from "@/hooks/useModeration"
 import { CommentPayload } from "@/interface/comments"
 import { CommentType } from "@/types/comments"
 
@@ -35,6 +36,8 @@ export const CommentContainer = ({ type, targetId }: Props) => {
   })
 
   const commentList = type === "news" ? newsComments : postComments
+  const blockedUserIds = useBlockedUserIds()
+  const visibleComments = (commentList?.comments ?? []).filter(comment => !blockedUserIds.has(comment.userId))
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: queries.comments[type]._def })
@@ -78,7 +81,7 @@ export const CommentContainer = ({ type, targetId }: Props) => {
     <View style={{ marginVertical: 24 }}>
       <CommentForm onSubmit={contents => handleCreate(contents)} isLoading={isLoading} />
       <View style={{ height: 12 }} />
-      {commentList?.comments.map(comment => (
+      {visibleComments.map(comment => (
         <CommentWithReplies
           key={comment.id}
           type={type}

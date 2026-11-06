@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query"
 import { router } from "expo-router"
 import React, { useRef, useState } from "react"
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native"
+import { FlatList, RefreshControl, View } from "react-native"
 
 import { NewsCard } from "@/components/news/NewsCard"
 import { FloatingButtons } from "@/components/posts/FloatingButtons"
+import { ListPageHeader } from "@/components/ui/ListPageHeader"
+import { ListToolbar } from "@/components/ui/ListToolbar"
 import { EmptyDataMessage, Loading } from "@/components/ui/primitives"
-import { SearchBar } from "@/components/ui/SearchBar"
 import { colors } from "@/constants/theme"
 import { useInfiniteList } from "@/hooks/useInfiniteList"
 import { useAuth } from "@/lib/auth"
@@ -14,13 +14,13 @@ import { queries } from "@/lib/queries"
 import { NEWS } from "@/types/news"
 import { UserType } from "@/types/users"
 
-/** 웹 app/(site)/news/page.tsx */
+const ListSeparator = () => <View style={{ height: 1, marginHorizontal: 16, backgroundColor: colors.surface }} />
+
+/** 웹 app/(site)/news/page.tsx — 제목 (+ 관리자만 "뉴스 등록"), 검색창, 가벼운 목록 */
 export const NewsListView = () => {
   const [keyword, setKeyword] = useState("")
   const listRef = useRef<FlatList<NEWS>>(null)
   const { user } = useAuth()
-
-  const { data: newsCount } = useQuery(queries.news.count())
 
   const list = useInfiniteList<NEWS, "news">(
     // query-key-factory 타입이 queryFn 을 숨겨서 캐스팅 (런타임에는 존재)
@@ -31,11 +31,12 @@ export const NewsListView = () => {
   const isAdmin = user?.type === UserType.ADMIN
 
   const header = (
-    <View style={styles.searchArea}>
-      <Text style={styles.headline}>
-        아트인포 예술 뉴스 <Text style={{ color: colors.main }}>{newsCount?.totalCount || "00"}</Text>
-      </Text>
-      <SearchBar value={keyword} onSubmit={setKeyword} />
+    <View style={{ marginBottom: 8 }}>
+      <ListPageHeader
+        title="뉴스"
+        action={isAdmin ? { label: "뉴스 등록", onPress: () => router.push("/news/create") } : undefined}
+      />
+      <ListToolbar searchPlaceholder="뉴스 제목, 내용 검색" keyword={keyword} onKeywordChange={setKeyword} />
     </View>
   )
 
@@ -46,23 +47,16 @@ export const NewsListView = () => {
         data={list.items}
         keyExtractor={item => String(item.id)}
         renderItem={({ item }) => <NewsCard news={item} />}
+        ItemSeparatorComponent={ListSeparator}
         ListHeaderComponent={header}
-        ListEmptyComponent={list.isLoading ? <Loading /> : <EmptyDataMessage />}
+        ListEmptyComponent={list.isLoading ? <Loading /> : <EmptyDataMessage message="검색 결과가 없어요." />}
         ListFooterComponent={list.isFetchingNextPage ? <Loading /> : <View style={{ height: 96 }} />}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={list.refreshing} onRefresh={list.refresh} />}
       />
-      <FloatingButtons
-        onScrollTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
-        onAdd={isAdmin ? () => router.push("/news/create") : undefined}
-      />
+      <FloatingButtons onScrollTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })} />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  searchArea: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8, gap: 10, alignItems: "center" },
-  headline: { fontSize: 20, fontWeight: "700", color: colors.black },
-})

@@ -7,6 +7,8 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, TextInpu
 import * as yup from "yup"
 
 import { PerformanceAreaModal } from "@/components/performances/PerformanceAreaModal"
+import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
+import { DateField } from "@/components/ui/DateField"
 import { ImagePickerField } from "@/components/ui/ImagePickerField"
 import { Button, Chip, Loading } from "@/components/ui/primitives"
 import { RichEditor } from "@/components/ui/RichEditor"
@@ -24,7 +26,7 @@ const filter = filters()
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
-// 웹은 <input type="date"> 를 쓰므로 앱에서는 YYYY-MM-DD 형식을 직접 검사한다
+// 웹의 <input type="date"> 대신 DateField 가 YYYY-MM-DD 문자열을 넣는다
 const schema = performanceSchema.shape({
   startAt: yup
     .string()
@@ -38,16 +40,10 @@ const schema = performanceSchema.shape({
 
 type PerformanceFormData = yup.InferType<typeof schema>
 
-/** 숫자만 입력하면 YYYY-MM-DD 로 하이픈을 넣어준다 */
-const formatDateInput = (text: string) => {
-  const digits = text.replace(/[^0-9]/g, "").slice(0, 8)
-  if (digits.length <= 4) return digits
-  if (digits.length <= 6) return `${digits.slice(0, 4)}-${digits.slice(4)}`
-  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`
-}
-
 /** 웹 app/(site)/performances/create + PerformanceForm. `?id=` 가 있으면 수정 모드 */
 export default function PerformanceCreateScreen() {
+  // 로그인이 필요한 화면 (웹 middleware 의 /*/create 와 같음)
+  useSignInRedirect()
   const { id } = useLocalSearchParams<{ id?: string }>()
   const performanceId = id ? Number(id) : undefined
   const isEdit = !!performanceId
@@ -222,13 +218,12 @@ export default function PerformanceCreateScreen() {
                 control={control}
                 name="startAt"
                 render={({ field }) => (
-                  <TextInput
+                  <DateField
                     value={field.value}
-                    onChangeText={text => field.onChange(formatDateInput(text))}
+                    onChange={field.onChange}
                     placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.gray400}
-                    keyboardType="number-pad"
-                    style={styles.dateInput}
+                    compact
+                    containerStyle={{ flex: 1 }}
                   />
                 )}
               />
@@ -237,13 +232,12 @@ export default function PerformanceCreateScreen() {
                 control={control}
                 name="endAt"
                 render={({ field }) => (
-                  <TextInput
+                  <DateField
                     value={field.value}
-                    onChangeText={text => field.onChange(formatDateInput(text))}
+                    onChange={field.onChange}
                     placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.gray400}
-                    keyboardType="number-pad"
-                    style={styles.dateInput}
+                    compact
+                    containerStyle={{ flex: 1 }}
                   />
                 )}
               />

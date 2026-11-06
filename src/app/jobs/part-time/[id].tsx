@@ -128,7 +128,7 @@ export default function PartTimeDetailScreen() {
           </InfoItem>
           <InfoItem title="전공">
             <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-              <MajorBadges majors={job.majors?.majors} max={2} />
+              <MajorBadges majors={job.majors?.majors} />
             </View>
           </InfoItem>
           <InfoItem title="주소">

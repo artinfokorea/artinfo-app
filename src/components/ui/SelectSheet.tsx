@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
@@ -37,9 +37,12 @@ export function SelectSheet<V>({
   const insets = useSafeAreaInsets()
   const [draft, setDraft] = useState<V[]>(selected)
 
-  useEffect(() => {
+  // 열릴 때마다 현재 선택값으로 초안을 맞춘다 (렌더 중 prop 변화 반영 패턴)
+  const [prevVisible, setPrevVisible] = useState(visible)
+  if (visible !== prevVisible) {
+    setPrevVisible(visible)
     if (visible) setDraft(selected)
-  }, [visible, selected])
+  }
 
   const toggle = (value: V) => {
     if (!multiple) {

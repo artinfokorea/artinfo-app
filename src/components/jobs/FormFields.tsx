@@ -1,6 +1,7 @@
-import React from "react"
+import React, { useState } from "react"
 import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from "react-native"
 
+import { AddressSearchSheet } from "@/components/ui/AddressSearchSheet"
 import { Icon } from "@/components/ui/Icon"
 import { colors } from "@/constants/theme"
 import { MAJOR } from "@/types/majors"
@@ -16,6 +17,44 @@ export const UnderlineInput = ({ error, style, ...props }: TextInputProps & { er
     <FieldError message={error} />
   </View>
 )
+
+/**
+ * 주소 입력 — 누르면 다음 우편번호 검색이 뜨고, 선택한 주소(data.address)를 채운다.
+ * 웹 FullTimeJobForm / PartTimeForm 의 PostCodeDialog 와 같은 동작.
+ */
+export const AddressField = ({
+  value,
+  onChange,
+  placeholder = "주소를 검색해주세요.",
+  error,
+}: {
+  value?: string
+  onChange: (address: string) => void
+  placeholder?: string
+  error?: string
+}) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <View style={{ marginBottom: 8 }}>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        style={[styles.underline, styles.addressRow, !!error && { borderBottomColor: colors.error }]}
+      >
+        <Text style={[styles.addressText, !value && { color: colors.gray400 }]} numberOfLines={2}>
+          {value || placeholder}
+        </Text>
+        <Icon name="magnifyingglass" size={16} color={colors.gray400} />
+      </Pressable>
+      <FieldError message={error} />
+      <AddressSearchSheet
+        visible={open}
+        onClose={() => setOpen(false)}
+        onSelect={result => onChange(result.address)}
+      />
+    </View>
+  )
+}
 
 export const FieldError = ({ message }: { message?: string }) =>
   message ? <Text style={styles.error}>{message}</Text> : null
@@ -97,6 +136,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.black,
   },
+  addressRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  addressText: { flex: 1, fontSize: 16, color: colors.black },
   error: { color: colors.error, fontSize: 12, fontWeight: "600", marginTop: 4 },
   majorRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   outlineButton: {

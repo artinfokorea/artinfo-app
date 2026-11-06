@@ -1,53 +1,48 @@
-import { useQueries } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { router } from "expo-router"
-import React, { useMemo, useState } from "react"
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native"
+import React, { useMemo, useRef, useState } from "react"
+import { FlatList, RefreshControl, StyleSheet, View } from "react-native"
 
-import { FilterTabBar, FloatingAddButton, ListTitle, padGrid } from "@/components/lessons/ListParts"
+import { padGrid } from "@/components/lessons/ListParts"
 import { PerformanceCard } from "@/components/performances/PerformanceCard"
+import { FloatingButtons } from "@/components/posts/FloatingButtons"
+import { ListPageHeader } from "@/components/ui/ListPageHeader"
+import { FilterGroup, FilterSelection, ListToolbar } from "@/components/ui/ListToolbar"
 import { EmptyDataMessage, Loading } from "@/components/ui/primitives"
-import { SearchBar } from "@/components/ui/SearchBar"
-import { SelectSheet } from "@/components/ui/SelectSheet"
 import { colors } from "@/constants/theme"
 import { useInfiniteList } from "@/hooks/useInfiniteList"
 import { useRequireAuth } from "@/lib/auth"
 import { queries } from "@/lib/queries"
-import {
-  PERFORMANCE,
-  PerformanceCategory,
-  performanceCategoryArray,
-  PerformanceCategoryValues,
-} from "@/types/performances"
+import { toRegionOptions } from "@/lib/regions"
+import { PERFORMANCE, PerformanceCategory, performanceCategoryArray } from "@/types/performances"
 
-/** 웹 app/(site)/performances/page.tsx (모바일 레이아웃) */
+const CATEGORY_OPTIONS = performanceCategoryArray.map(({ title, value }) => ({ label: title, value }))
+
+/** 웹 app/(site)/performances/page.tsx — 제목 + "+ 공연 등록", 검색창 + 필터(지역·장르), 2열 포스터 */
 export default function PerformancesScreen() {
   const requireAuth = useRequireAuth()
+  const listRef = useRef<FlatList<PERFORMANCE | null>>(null)
   const [keyword, setKeyword] = useState("")
-  const [provinceId, setProvinceId] = useState<number | null>(null)
-  const [category, setCategory] = useState<PerformanceCategory | null>(null)
-  const [sheet, setSheet] = useState<"region" | "category" | null>(null)
+  const [selected, setSelected] = useState<FilterSelection>({})
 
-  const [provincesQuery, countQuery] = useQueries({
-    queries: [queries.provinces.list(), queries.performances.count()],
-  })
-  const provinces = provincesQuery.data?.provinces ?? []
+  const provincesQuery = useQuery(queries.provinces.list())
+
+  const groups: FilterGroup[] = [
+    { param: "provinceId", name: "지역", options: toRegionOptions(provincesQuery.data?.provinces) },
+    { param: "category", name: "장르", options: CATEGORY_OPTIONS },
+  ]
 
   const filters = useMemo(
     () => ({
       size: 10,
       keyword: keyword || undefined,
-      categories: category ? [category] : [],
-      provinceIds: provinceId ? [provinceId] : [],
+      categories: (selected.category ?? []) as PerformanceCategory[],
+      provinceIds: (selected.provinceId ?? []).map(Number),
     }),
-    [keyword, category, provinceId],
+    [keyword, selected],
   )
 
-  const list = useInfiniteList<PERFORMANCE, "performances">(
-    queries.performances.infiniteList(filters),
-    "performances",
-  )
-
-  const selectedProvince = provinces.find(p => p.id === provinceId)
+  const list = useInfiniteList<PERFORMANCE, "performances">(queries.performances.infiniteList(filters), "performances")
 
   const goCreate = () => {
     if (requireAuth()) router.push("/performances/create")
@@ -56,81 +51,42 @@ export default function PerformancesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.white }}>
       <FlatList
+        ref={listRef}
         data={padGrid(list.items)}
         keyExtractor={(item, index) => (item ? String(item.id) : `empty-${index}`)}
         numColumns={2}
-        columnWrapperStyle={{ gap: 16 }}
+        columnWrapperStyle={styles.row}
         contentContainerStyle={styles.content}
-        renderItem={({ item }) =>
-          item ? <PerformanceCard performance={item} /> : <View style={{ flex: 1 }} />
-        }
+        renderItem={({ item }) => (item ? <PerformanceCard performance={item} /> : <View style={{ flex: 1 }} />)}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={list.refreshing} onRefresh={list.refresh} />}
         ListHeaderComponent={
-          <View style={{ gap: 12, marginBottom: 4 }}>
-            <ListTitle>
-              기대되는 공연 <Text style={{ color: colors.main }}>{countQuery.data?.totalCount ?? ""}</Text>
-            </ListTitle>
-            <SearchBar
-              value={keyword}
-              onSubmit={setKeyword}
-              placeholder="제목, 출연진 등을 검색해보세요."
-            />
-            <FilterTabBar
-              tabs={[
-                {
-                  key: "region",
-                  label: selectedProvince ? selectedProvince.name.substring(0, 2) : "지역",
-                  active: !!selectedProvince,
-                  onPress: () => setSheet("region"),
-                },
-                {
-                  key: "category",
-                  label: category ? PerformanceCategoryValues[category] : "분야",
-                  active: !!category,
-                  onPress: () => setSheet("category"),
-                },
-              ]}
+          <View style={styles.header}>
+            <ListPageHeader title="공연" action={{ label: "공연 등록", onPress: goCreate }} />
+            <ListToolbar
+              searchPlaceholder="공연 제목, 출연진 검색"
+              keyword={keyword}
+              onKeywordChange={setKeyword}
+              groups={groups}
+              selected={selected}
+              onSelectedChange={setSelected}
             />
           </View>
         }
-        ListEmptyComponent={list.isLoading ? <Loading /> : <EmptyDataMessage />}
-        ListFooterComponent={
-          list.isFetchingNextPage ? <Loading style={{ paddingVertical: 16 }} /> : undefined
+        ListEmptyComponent={
+          list.isLoading ? <Loading /> : <EmptyDataMessage message="조건에 맞는 공연이 없어요. 필터를 바꿔 보세요." />
         }
+        ListFooterComponent={list.isFetchingNextPage ? <Loading style={{ paddingVertical: 16 }} /> : undefined}
+        keyboardShouldPersistTaps="handled"
       />
-      <FloatingAddButton onPress={goCreate} />
-
-      <SelectSheet<number | null>
-        visible={sheet === "region"}
-        title="지역"
-        options={[
-          { label: "전체", value: null },
-          ...provinces.map(p => ({ label: p.name, value: p.id as number | null })),
-        ]}
-        selected={[provinceId]}
-        onClose={() => setSheet(null)}
-        onConfirm={([value]) => setProvinceId(value ?? null)}
-      />
-      <SelectSheet<PerformanceCategory | null>
-        visible={sheet === "category"}
-        title="분야"
-        options={[
-          { label: "전체", value: null },
-          ...performanceCategoryArray.map(c => ({
-            label: c.title,
-            value: c.value as PerformanceCategory | null,
-          })),
-        ]}
-        selected={[category]}
-        onClose={() => setSheet(null)}
-        onConfirm={([value]) => setCategory(value ?? null)}
-      />
+      <FloatingButtons onScrollTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 96, gap: 8 },
+  header: { marginHorizontal: -16, marginBottom: 20 },
+  content: { paddingHorizontal: 16, paddingBottom: 96, gap: 24 },
+  row: { gap: 12 },
 })

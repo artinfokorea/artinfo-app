@@ -78,7 +78,7 @@ export default function JobDetailScreen() {
           <Text style={styles.title}>{job.title}</Text>
           {job.majors?.majors?.length ? (
             <View style={styles.badges}>
-              <MajorBadges majors={job.majors.majors} max={2} />
+              <MajorBadges majors={job.majors.majors} />
             </View>
           ) : null}
           <Text style={styles.address}>
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   image: { width: "100%", height: 244, borderRadius: 12 },
   info: { paddingVertical: 8, gap: 8 },
   title: { marginTop: 16, fontSize: 20, fontWeight: "700", color: colors.black },
-  badges: { flexDirection: "row", gap: 8, marginVertical: 4 },
+  badges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: 4 },
   address: { fontSize: 14, fontWeight: "500", color: colors.coolgray },
   metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   meta: { fontSize: 14, fontWeight: "500", color: colors.coolgray },

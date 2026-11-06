@@ -9,13 +9,13 @@ import { PERFORMANCE } from "@/types/performances"
 
 const filter = filters()
 
-/** 웹 components/performances/PerformanceCard: 3:4 포스터 + 제목 + 기간 */
+/** 웹 components/performances/PerformanceCard — 3:4 포스터, 제목·기간은 왼쪽 정렬 */
 export const PerformanceCard = ({ performance }: { performance: PERFORMANCE }) => (
-  <Pressable style={{ flex: 1 }} onPress={() => router.push(`/performances/${performance.id}`)}>
+  <Pressable style={styles.card} onPress={() => router.push(`/performances/${performance.id}`)}>
     <View style={styles.poster}>
       <FallbackImage src={performance.posterImageUrl} style={StyleSheet.absoluteFill} />
     </View>
-    <View style={styles.info}>
+    <View style={{ gap: 4 }}>
       <Text style={styles.title} numberOfLines={2}>
         {performance.title}
       </Text>
@@ -27,13 +27,15 @@ export const PerformanceCard = ({ performance }: { performance: PERFORMANCE }) =
 )
 
 const styles = StyleSheet.create({
+  card: { flex: 1, gap: 10 },
   poster: {
     aspectRatio: 3 / 4,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.line2,
     overflow: "hidden",
-    backgroundColor: colors.gray100,
+    backgroundColor: colors.surface2,
   },
-  info: { marginTop: 12, marginBottom: 8, alignItems: "center", gap: 8 },
-  title: { fontSize: 13, fontWeight: "700", textAlign: "center", color: colors.black },
-  period: { fontSize: 11, color: colors.grayfont },
+  title: { fontSize: 15, fontWeight: "700", color: colors.ink, lineHeight: 20 },
+  period: { fontSize: 13, color: colors.muted },
 })

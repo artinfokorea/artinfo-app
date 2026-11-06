@@ -9,19 +9,18 @@ import { NEWS } from "@/types/news"
 
 const filter = filters()
 
-/** 웹 components/news/NewsCard (모바일: 이미지 위, 텍스트 아래) */
+/** 웹 components/news/NewsCard (모바일) — 왼쪽 썸네일(27:17) + 제목 2줄 + 날짜 */
 export const NewsCard = ({ news }: { news: NEWS }) => (
   <Pressable
     onPress={() => router.push(`/news/${news.id}`)}
-    style={({ pressed }) => [styles.card, pressed && { backgroundColor: colors.whitesmoke }]}
+    style={({ pressed }) => [styles.card, pressed && { backgroundColor: colors.surface2 }]}
   >
-    <FallbackImage src={news.thumbnailImageUrl} style={styles.image} />
-    <View style={{ gap: 16 }}>
+    <View style={styles.thumb}>
+      <FallbackImage src={news.thumbnailImageUrl} style={StyleSheet.absoluteFill} />
+    </View>
+    <View style={styles.body}>
       <Text style={styles.title} numberOfLines={2}>
         {news.title}
-      </Text>
-      <Text style={styles.summary} numberOfLines={4}>
-        {news.summary?.trim()}
       </Text>
       <Text style={styles.date}>{filter.YYYYMMDD(news.createdAt)}</Text>
     </View>
@@ -29,9 +28,17 @@ export const NewsCard = ({ news }: { news: NEWS }) => (
 )
 
 const styles = StyleSheet.create({
-  card: { padding: 16, gap: 32, borderRadius: 6 },
-  image: { width: "100%", aspectRatio: 27 / 17, borderRadius: 8 },
-  title: { fontSize: 20, letterSpacing: 0.5, color: colors.black },
-  summary: { fontSize: 14, lineHeight: 28, letterSpacing: 0.3, color: colors.coolgray },
-  date: { fontSize: 14, color: colors.coolgray },
+  card: { flexDirection: "row", gap: 14, paddingHorizontal: 16, paddingVertical: 16 },
+  thumb: {
+    width: 120,
+    aspectRatio: 27 / 17,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.line2,
+    backgroundColor: colors.surface2,
+    overflow: "hidden",
+  },
+  body: { flex: 1, minWidth: 0, gap: 6 },
+  title: { fontSize: 15, fontWeight: "700", color: colors.ink, lineHeight: 20 },
+  date: { fontSize: 13, color: colors.coolgray },
 })

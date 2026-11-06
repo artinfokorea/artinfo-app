@@ -5,34 +5,38 @@ import { Pressable, StyleSheet, Text, View } from "react-native"
 import { FallbackImage } from "@/components/ui/FallbackImage"
 import { colors } from "@/constants/theme"
 import filters from "@/lib/filters"
+import { shortRegion } from "@/lib/regions"
 import { JOB, JobType } from "@/types/jobs"
 import { MAJOR } from "@/types/majors"
 
 const filter = filters()
 
 /** 지역 뱃지: 주소의 첫 단어 앞 두 글자 (웹과 동일) */
-export const provinceLabel = (address?: string) => address?.split(" ")[0]?.substring(0, 2)
+export const provinceLabel = (address?: string) => shortRegion(address) || undefined
 
-/** 전공 뱃지 목록. max 개를 넘으면 마지막 뱃지를 "OO 외 N" 으로 표시 */
+/**
+ * 전공 뱃지 목록 (단기 공고 카드·상세에서 사용).
+ * max 를 주면 그 개수를 넘을 때 마지막 뱃지를 "OO 외 N" 으로 표시하고, 안 주면 모두 펼친다 (웹 6a2650c).
+ */
 export const MajorBadges = ({
   majors,
   max,
   size = "sm",
 }: {
   majors?: MAJOR[]
-  max: number
+  max?: number
   size?: "xs" | "sm"
 }) => {
   if (!majors?.length) return null
-  const shown = majors.slice(0, max)
+  const shown = max ? majors.slice(0, max) : majors
   return (
     <>
       {shown.map((major, index) => {
-        const isLast = majors.length > max && index === max - 1
+        const isLast = !!max && majors.length > max && index === max - 1
         return (
           <View key={major.id} style={styles.majorBadge}>
             <Text style={[styles.majorBadgeText, size === "xs" && { fontSize: 10 }]} numberOfLines={1}>
-              {isLast ? `${major.koName} 외 ${majors.length - max}` : major.koName}
+              {isLast ? `${major.koName} 외 ${majors.length - max!}` : major.koName}
             </Text>
           </View>
         )
@@ -52,21 +56,28 @@ export const ProvinceBadge = ({ address, size = "sm" }: { address?: string; size
 }
 
 /**
- * 웹 components/jobs/JobCard + ReligionCard (모바일 레이아웃).
- * 종교 공고는 이미지 대신 기관명을 보여주고, 날짜는 마감일(endAt)을 쓴다.
+ * 웹 components/jobs/JobCard (모바일) — 5:3 썸네일(110×66, 이미지는 contain) + 제목 2줄 + 메타 한 줄.
+ * 이미지가 없거나 종교 공고면 기관명 박스로 대신한다.
  */
 export const JobCard = memo(({ job }: { job: JOB }) => {
-  const isReligion = job.type === JobType.RELIGION
-  const showImage = !isReligion && !!job.imageUrl
+  const showImage = !!job.imageUrl && job.type !== JobType.RELIGION
+  const meta = [job.companyName, shortRegion(job.address), filter.FROM_NOW_COMMENT(job.createdAt)]
+    .filter(Boolean)
+    .join(" · ")
 
   return (
     <Pressable
       onPress={() => router.push(`/jobs/${job.id}`)}
-      style={({ pressed }) => [styles.card, pressed && { backgroundColor: "#f5f5f5" }]}
+      style={({ pressed }) => [styles.card, pressed && { backgroundColor: colors.surface2 }]}
     >
       <View style={styles.thumb}>
         {showImage ? (
-          <FallbackImage src={job.imageUrl} fallbackText={job.companyName} style={styles.thumbImage} />
+          <FallbackImage
+            src={job.imageUrl}
+            fallbackText={job.companyName}
+            contentFit="contain"
+            style={StyleSheet.absoluteFill}
+          />
         ) : (
           <Text style={styles.thumbText} numberOfLines={3}>
             {job.companyName}
@@ -74,21 +85,12 @@ export const JobCard = memo(({ job }: { job: JOB }) => {
         )}
       </View>
       <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={isReligion ? 1 : 2}>
+        <Text style={styles.title} numberOfLines={2}>
           {job.title}
         </Text>
-        <View style={styles.badges}>
-          <ProvinceBadge address={job.address} size="xs" />
-          <MajorBadges majors={job.majors?.majors} max={1} size="xs" />
-        </View>
-        <View style={styles.footer}>
-          <Text style={styles.footerText} numberOfLines={1}>
-            {job.companyName}
-          </Text>
-          <Text style={styles.footerText}>
-            {filter.YYYYMMDD(isReligion ? job.endAt : job.createdAt)}
-          </Text>
-        </View>
+        <Text style={styles.meta} numberOfLines={1}>
+          {meta}
+        </Text>
       </View>
     </Pressable>
   )
@@ -97,31 +99,27 @@ JobCard.displayName = "JobCard"
 
 const styles = StyleSheet.create({
   card: {
-    height: 130,
     flexDirection: "row",
-    alignItems: "center",
+    gap: 14,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 16,
   },
   thumb: {
-    width: 150,
-    height: 100,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.whitesmoke,
+    width: 110,
+    height: 66,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.line2,
     backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
-  thumbImage: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  thumbText: { fontSize: 16, fontWeight: "700", color: colors.black, textAlign: "center" },
-  body: { flex: 1, marginLeft: 16, paddingVertical: 8 },
-  title: { fontSize: 14, fontWeight: "700", color: colors.black, lineHeight: 18 },
-  badges: { flexDirection: "row", alignItems: "center", gap: 6, marginVertical: 8, flexWrap: "nowrap" },
-  footer: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-  footerText: { fontSize: 12, color: colors.coolgray, flexShrink: 1 },
+  thumbText: { fontSize: 11, fontWeight: "700", color: colors.ink3, textAlign: "center", lineHeight: 14 },
+  body: { flex: 1, minWidth: 0, gap: 4 },
+  title: { fontSize: 15, fontWeight: "700", color: colors.ink, lineHeight: 20 },
+  meta: { fontSize: 13, color: colors.coolgray },
   majorBadge: {
     backgroundColor: colors.main,
     borderRadius: 12,

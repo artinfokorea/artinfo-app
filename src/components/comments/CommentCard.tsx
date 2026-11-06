@@ -4,8 +4,8 @@ import { ActionSheetIOS, Alert, Pressable, StyleSheet, Text, View } from "react-
 import { CommentEditor } from "@/components/comments/CommentEditor"
 import { FallbackImage } from "@/components/ui/FallbackImage"
 import { Icon } from "@/components/ui/Icon"
-import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
+import { useModeration } from "@/hooks/useModeration"
 import { useAuth, useRequireAuth } from "@/lib/auth"
 import filters from "@/lib/filters"
 import { COMMENT } from "@/types/comments"
@@ -24,7 +24,7 @@ type Props = {
 export const CommentCard = ({ comment, isChild, onDelete, onUpdate, onReply }: Props) => {
   const { user } = useAuth()
   const requireAuth = useRequireAuth()
-  const { successToast } = useToast()
+  const { report, block } = useModeration()
   const [isEdit, setIsEdit] = useState(false)
 
   const isAuthor = !!user && user.id === comment.userId
@@ -43,7 +43,8 @@ export const CommentCard = ({ comment, isChild, onDelete, onUpdate, onReply }: P
       actions.push({ label: "수정", run: () => setIsEdit(true) })
       actions.push({ label: "삭제", destructive: true, run: confirmDelete })
     } else {
-      actions.push({ label: "신고", run: () => successToast("신고가 접수되었습니다.") })
+      actions.push({ label: "신고", run: () => report("COMMENT", comment.id) })
+      actions.push({ label: "이 사용자 차단", destructive: true, run: () => block(comment.userId, comment.userNickname) })
     }
 
     const options = [...actions.map(a => a.label), "취소"]

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 
 import { Button } from "@/components/ui/primitives"
@@ -17,9 +17,12 @@ const MAX = 100
 export const PartTimeApplySheet = ({ visible, onClose, onApply, loading }: Props) => {
   const [introduce, setIntroduce] = useState("")
 
-  useEffect(() => {
+  // 닫히면 입력 내용을 비운다 (렌더 중 prop 변화 반영 패턴)
+  const [prevVisible, setPrevVisible] = useState(visible)
+  if (visible !== prevVisible) {
+    setPrevVisible(visible)
     if (!visible) setIntroduce("")
-  }, [visible])
+  }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

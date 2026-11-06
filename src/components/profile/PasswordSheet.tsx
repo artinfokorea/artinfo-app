@@ -63,13 +63,19 @@ export const PasswordSheet = ({
     defaultValues: { isEmailVerified: false },
   })
 
-  useEffect(() => {
+  // 닫히면 인증 상태를 초기화한다 (로컬 state 는 렌더 중에, 폼은 effect 에서)
+  const [prevVisible, setPrevVisible] = useState(visible)
+  if (visible !== prevVisible) {
+    setPrevVisible(visible)
     if (!visible) {
-      reset({ isEmailVerified: false, password: "", rePassword: "" })
       setIsSendEmail(false)
       setIsVerifyEmail(false)
       setVerifyCode("")
     }
+  }
+
+  useEffect(() => {
+    if (!visible) reset({ isEmailVerified: false, password: "", rePassword: "" })
   }, [visible, reset])
 
   const sendEmail = async () => {

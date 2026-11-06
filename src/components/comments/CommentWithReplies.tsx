@@ -6,6 +6,7 @@ import { CommentCard } from "@/components/comments/CommentCard"
 import { CommentEditor } from "@/components/comments/CommentEditor"
 import { FallbackImage } from "@/components/ui/FallbackImage"
 import { colors } from "@/constants/theme"
+import { useBlockedUserIds } from "@/hooks/useModeration"
 import { useAuth } from "@/lib/auth"
 import { queries } from "@/lib/queries"
 import { COMMENT } from "@/types/comments"
@@ -41,6 +42,8 @@ export const CommentWithReplies = ({ type, targetId, comment, onDelete, onUpdate
   })
 
   const nested = type === "news" ? nestedNews : nestedPost
+  const blockedUserIds = useBlockedUserIds()
+  const visibleReplies = (nested?.comments ?? []).filter(child => !blockedUserIds.has(child.userId))
   const hasMoreReplies = comment.childrenCount > 0 && comment.childrenCount > nestedSize
 
   return (
@@ -70,7 +73,7 @@ export const CommentWithReplies = ({ type, targetId, comment, onDelete, onUpdate
         </View>
       ) : null}
 
-      {nested?.comments.map(child => (
+      {visibleReplies.map(child => (
         <CommentCard
           key={child.id}
           comment={child}

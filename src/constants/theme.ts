@@ -34,6 +34,17 @@ export const colors = {
   gray800: "#1f2937",
   gray900: "#111827",
   indigo500: "#6366f1",
+  // 웹 목록 페이지 개편(2026-11)에서 쓰는 중립 톤 — tailwind 임의 색상값 그대로
+  ink: "#191F28",
+  ink2: "#333D4B",
+  ink3: "#4E5968",
+  muted: "#6B7684",
+  line: "#E5E8EB",
+  line2: "#EEF0F3",
+  surface: "#F2F4F6",
+  surface2: "#F7F8FA",
+  tagBg: "#E8F3FF",
+  tagText: "#1B64DA",
 } as const
 
 export const spacing = {

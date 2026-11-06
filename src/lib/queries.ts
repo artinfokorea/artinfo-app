@@ -29,6 +29,7 @@ import {
   getNewsDetail,
 } from "@/services/news"
 import { getProvinces } from "@/services/system"
+import { getBlockedUserIds } from "@/services/moderation"
 import { getMe } from "@/services/users"
 import { ListRequest } from "@/interface"
 import { JobsRequest, PartTimeJobRequest } from "@/interface/jobs"
@@ -234,6 +235,13 @@ const posts = createQueryKeys("posts", {
   }),
 })
 
+const moderation = createQueryKeys("moderation", {
+  blockedUsers: () => ({
+    queryKey: ["blocked-users"],
+    queryFn: () => getBlockedUserIds(),
+  }),
+})
+
 export const queries = mergeQueryKeys(
   ads,
   jobs,
@@ -245,4 +253,5 @@ export const queries = mergeQueryKeys(
   comments,
   performances,
   posts,
+  moderation,
 )

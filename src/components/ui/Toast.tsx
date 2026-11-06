@@ -16,7 +16,7 @@ const ToastContext = createContext<ToastApi | null>(null)
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets()
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
-  const opacity = useRef(new Animated.Value(0)).current
+  const [opacity] = useState(() => new Animated.Value(0))
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const show = useCallback(

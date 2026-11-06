@@ -8,16 +8,19 @@ dayjs.extend(relativeTime)
 dayjs.locale("ko")
 dayjs.extend(utc)
 dayjs.extend(timezone)
+/** 한국 시간 오프셋(분). Hermes 엔진은 Intl 타임존 변환이 불완전해서 dayjs.tz() 대신 utcOffset 으로 고정한다 */
+const KST_OFFSET_MINUTES = 9 * 60
 dayjs.tz.setDefault("Asia/Seoul")
 
 export default function filters() {
   return {
+    /** 날짜를 한국 시간(Asia/Seoul) 기준으로 포맷한다 — 기기 시간대와 상관없이 웹과 같은 문자열 */
     YYYYMMDD(date?: Date | string | null, format = "YYYY.MM.DD") {
       if (!date) {
         return null
       }
 
-      return dayjs(date).format(format)
+      return dayjs(date).utcOffset(KST_OFFSET_MINUTES).format(format)
     },
     DIFF_FROM_NOW_ADD_TIME(date?: Date | string | null, format = "YYYY.MM.DD") {
       if (!date) {

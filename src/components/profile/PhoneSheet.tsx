@@ -27,16 +27,14 @@ export const PhoneSheet = ({ visible, onClose, sendCode, checkCode, isLoading }:
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const [time, setTime] = useState(180)
-  const [isCounting, setIsCounting] = useState(false)
+  const [isTimerStarted, setIsTimerStarted] = useState(false)
+  // 3분이 지나면 자동으로 타이머가 멈춘다
+  const isCounting = isTimerStarted && time > 0
 
   const isValidPhone = PHONE_REGEX.test(phone)
 
   useEffect(() => {
     if (!isCounting) return
-    if (time <= 0) {
-      setIsCounting(false)
-      return
-    }
     const id = setInterval(() => setTime(prev => prev - 1), 1000)
     return () => clearInterval(id)
   }, [isCounting, time])
@@ -45,7 +43,7 @@ export const PhoneSheet = ({ visible, onClose, sendCode, checkCode, isLoading }:
     setPhone("")
     setCode("")
     setTime(180)
-    setIsCounting(false)
+    setIsTimerStarted(false)
     onClose()
   }
 
@@ -74,7 +72,7 @@ export const PhoneSheet = ({ visible, onClose, sendCode, checkCode, isLoading }:
               disabled={!isValidPhone}
               onPress={() => {
                 setTime(180)
-                setIsCounting(true)
+                setIsTimerStarted(true)
                 sendCode(phone)
               }}
             />

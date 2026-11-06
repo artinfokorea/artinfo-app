@@ -6,28 +6,33 @@ import { FallbackImage } from "@/components/ui/FallbackImage"
 import { colors } from "@/constants/theme"
 import { LESSON } from "@/types/lessons"
 
-/** 웹 components/lessons/LessonCard: 20:27 사진 위 오른쪽 아래에 이름 · 전공 · 지역 */
+/** 웹 components/lessons/LessonCard — 세로 사진(20:27) 아래에 이름 · 전공 칩 · 지역 */
 export const LessonCard = ({ lesson }: { lesson: LESSON }) => {
   const [provinceName, areaName] = (lesson.area ?? "").split(" ")
-  const province = provinceName?.substring(0, 2)
+  const location = [provinceName?.substring(0, 2), areaName].filter(Boolean).join(" ")
 
   return (
     <Pressable style={styles.card} onPress={() => router.push(`/lessons/${lesson.id}`)}>
       <View style={styles.imageBox}>
         <FallbackImage src={lesson.imageUrl} style={StyleSheet.absoluteFill} />
-        <View style={styles.shade} />
-        <View style={styles.caption}>
-          <Text style={styles.captionText} numberOfLines={1}>
-            {lesson.name}
-          </Text>
-          <View style={styles.captionRow}>
-            <Text style={styles.captionText} numberOfLines={1}>
-              {lesson.major}
+      </View>
+      <View style={{ gap: 4 }}>
+        <Text style={styles.name} numberOfLines={1}>
+          {lesson.name}
+        </Text>
+        <View style={styles.metaRow}>
+          {lesson.major ? (
+            <View style={styles.majorChip}>
+              <Text style={styles.majorText} numberOfLines={1}>
+                {lesson.major}
+              </Text>
+            </View>
+          ) : null}
+          {location ? (
+            <Text style={styles.location} numberOfLines={1}>
+              {location}
             </Text>
-            <Text style={styles.captionText} numberOfLines={1}>
-              {[province, areaName].filter(Boolean).join(" ")}
-            </Text>
-          </View>
+          ) : null}
         </View>
       </View>
     </Pressable>
@@ -35,30 +40,26 @@ export const LessonCard = ({ lesson }: { lesson: LESSON }) => {
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1 },
+  card: { flex: 1, gap: 10 },
   imageBox: {
     aspectRatio: 20 / 27,
-    borderRadius: 4,
-    borderBottomLeftRadius: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.line2,
     overflow: "hidden",
-    backgroundColor: colors.gray100,
+    backgroundColor: colors.surface2,
   },
-  shade: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: "40%",
-    backgroundColor: "rgba(0,0,0,0.18)",
+  name: { fontSize: 15, fontWeight: "700", color: colors.ink },
+  metaRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 6 },
+  majorChip: {
+    height: 24,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: colors.tagBg,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 1,
   },
-  caption: { position: "absolute", right: 12, bottom: 12, left: 12, alignItems: "flex-end" },
-  captionRow: { flexDirection: "row", gap: 12, justifyContent: "flex-end" },
-  captionText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "right",
-    textShadowColor: "rgba(0,0,0,0.4)",
-    textShadowRadius: 3,
-  },
+  majorText: { fontSize: 12, fontWeight: "500", color: colors.tagText },
+  location: { fontSize: 13, color: colors.muted, flexShrink: 1 },
 })
