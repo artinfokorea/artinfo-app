@@ -81,11 +81,12 @@ export const signInWithEmail = async (email: string, password: string) => {
   await authStore.set(toTokens(result.item))
 }
 
-/** SNS 로그인 — 웹의 NextAuth "sns" provider 와 같은 API */
-export const signInWithSns = async (type: string, accessToken: string) => {
+/** SNS 로그인 — 웹의 NextAuth "sns" provider 와 같은 API. name 은 Apple 최초 로그인 때만 온다 */
+export const signInWithSns = async (type: string, accessToken: string, name?: string | null) => {
   const { result } = await postJson("/auths/login/sns", {
     type,
     token: accessToken,
+    ...(name ? { name } : {}),
   })
   if (!result?.item) {
     throw new Error(result?.message ?? "SNS 로그인에 실패했습니다.")

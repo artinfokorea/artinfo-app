@@ -13,6 +13,13 @@ type Props = Omit<ImageProps, "source"> & {
 
 const placeholderUser = require("@/assets/images/placeholder-user.png")
 
+/**
+ * iOS ATS 는 평문 http 이미지를 차단한다 (kopis.or.kr 공연 포스터 등).
+ * 해당 호스트들이 https 도 제공하므로 스킴만 올려서 로드한다.
+ */
+const toSecureUrl = (url?: string | null) =>
+  url ? url.replace(/^http:\/\//i, "https://") : url
+
 /** 웹 components/common/FallbackImage 와 같은 동작: src 가 없거나 깨지면 대체 이미지/텍스트 */
 export const FallbackImage = ({
   src,
@@ -23,8 +30,9 @@ export const FallbackImage = ({
   ...props
 }: Props) => {
   const [error, setError] = useState(false)
+  const uri = toSecureUrl(src)
 
-  if ((!src || error) && fallbackText) {
+  if ((!uri || error) && fallbackText) {
     return (
       <View style={[styles.fallback, style as any]}>
         <Text style={styles.fallbackText} numberOfLines={2}>
@@ -36,7 +44,7 @@ export const FallbackImage = ({
 
   return (
     <Image
-      source={!src || error ? fallbackSource : { uri: src }}
+      source={!uri || error ? fallbackSource : { uri }}
       style={style}
       contentFit={contentFit}
       transition={150}

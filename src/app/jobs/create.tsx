@@ -4,6 +4,7 @@ import React from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 
 import { FullTimeJobForm, FullTimeJobFormData } from "@/components/jobs/FullTimeJobForm"
+import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { RequireLogin } from "@/components/jobs/RequireLogin"
 import { useJobMutation } from "@/components/jobs/useJobMutation"
 import { EmptyDataMessage, Loading } from "@/components/ui/primitives"
@@ -17,6 +18,8 @@ import { JobType, JobTypeList } from "@/types/jobs"
  * 앱에서는 수정도 이 화면에서 처리한다: /jobs/create?id=123&jobType=ART_ORGANIZATION
  */
 export default function JobCreateScreen() {
+  // 로그인이 필요한 화면 (웹 middleware 의 /*/create 와 같음)
+  useSignInRedirect()
   const params = useLocalSearchParams<{ id?: string; jobType?: JobType }>()
   const jobId = params.id ? Number(params.id) : undefined
   const isEdit = !!jobId

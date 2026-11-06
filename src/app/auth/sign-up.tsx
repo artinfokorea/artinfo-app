@@ -2,7 +2,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import { router, Stack } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { Text } from "react-native"
+import { Text, View } from "react-native"
 import * as yup from "yup"
 
 import {
@@ -11,9 +11,11 @@ import {
   getErrorMessage,
   passwordInputProps,
 } from "@/components/auth/ControlledField"
+import { ConsentCheckbox } from "@/components/auth/ConsentCheckbox"
 import { FormScreen } from "@/components/auth/FormScreen"
 import { Button } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
+import { PRIVACY_URL, TERMS_URL } from "@/constants/config"
 import { colors } from "@/constants/theme"
 import { signUpSchema } from "@/lib/schemas"
 import {
@@ -32,6 +34,10 @@ export default function SignUpScreen() {
   const [isEmailDuplicateLoading, setIsEmailDuplicateLoading] = useState(false)
   const [isEmailVerifiedLoading, setIsEmailVerifiedLoading] = useState(false)
   const [isSendEmailVerifiedCode, setIsSendEmailVerifiedCode] = useState(false)
+  // 심사 지침 1.2 / 5.1.1 — 약관·개인정보처리방침 필수 동의
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  const [agreePrivacy, setAgreePrivacy] = useState(false)
+  const isAgreed = agreeTerms && agreePrivacy
 
   const {
     control,
@@ -166,7 +172,23 @@ export default function SignUpScreen() {
         {...passwordInputProps}
         textContentType="newPassword"
       />
-      <Button title="회원가입" loading={isPending} onPress={() => handleSubmit(handleSignUp)()} style={{ marginTop: 8 }} />
+      <View style={{ marginTop: 8 }}>
+        <ConsentCheckbox checked={agreeTerms} onToggle={() => setAgreeTerms(v => !v)} label="이용약관 동의" url={TERMS_URL} />
+        <ConsentCheckbox
+          checked={agreePrivacy}
+          onToggle={() => setAgreePrivacy(v => !v)}
+          label="개인정보 수집·이용 동의"
+          url={PRIVACY_URL}
+        />
+      </View>
+      <Button
+        title="회원가입"
+        loading={isPending}
+        disabled={!isAgreed}
+        onPress={() => handleSubmit(handleSignUp)()}
+        style={{ marginTop: 8 }}
+      />
+      {!isAgreed ? <Text style={{ fontSize: 12, color: colors.coolgray, textAlign: "center" }}>약관에 동의해야 가입할 수 있습니다.</Text> : null}
     </FormScreen>
   )
 }

@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 
 import { Button, Loading } from "@/components/ui/primitives"
+import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { RichEditor } from "@/components/ui/RichEditor"
 import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
@@ -23,6 +24,8 @@ const extractFirstImageUrl = (html: string) => html.match(/<img[^>]+src=["']([^"
 
 /** 웹 app/(site)/posts/create + components/posts/PostForm. ?postId= 가 있으면 수정 */
 export default function PostCreateScreen() {
+  // 로그인이 필요한 화면 (웹 middleware 의 /*/create 와 같음)
+  useSignInRedirect()
   const { postId } = useLocalSearchParams<{ postId?: string }>()
   const { isReady, isLoggedIn } = useAuth()
 

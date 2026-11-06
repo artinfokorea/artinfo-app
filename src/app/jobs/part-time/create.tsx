@@ -4,6 +4,7 @@ import React, { useEffect } from "react"
 import { Alert } from "react-native"
 
 import { PartTimeForm, PartTimeFormData, toApiSchedules } from "@/components/jobs/PartTimeForm"
+import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { RequireLogin } from "@/components/jobs/RequireLogin"
 import { useJobMutation } from "@/components/jobs/useJobMutation"
 import { EmptyDataMessage, Loading } from "@/components/ui/primitives"
@@ -16,6 +17,8 @@ import { createPartTimeJob, updatePartTimeJob } from "@/services/jobs"
  * 앱에서는 수정도 이 화면에서 처리한다: /jobs/part-time/create?id=123
  */
 export default function PartTimeCreateScreen() {
+  // 로그인이 필요한 화면 (웹 middleware 의 /*/create 와 같음)
+  useSignInRedirect()
   const params = useLocalSearchParams<{ id?: string }>()
   const jobId = params.id ? Number(params.id) : undefined
 

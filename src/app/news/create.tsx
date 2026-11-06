@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from "react-native"
 
 import { ImagePickerField } from "@/components/ui/ImagePickerField"
+import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { Button, Loading, TextField } from "@/components/ui/primitives"
 import { RichEditor } from "@/components/ui/RichEditor"
 import { useToast } from "@/components/ui/Toast"
@@ -23,6 +24,8 @@ const isEmptyHtml = (html: string) =>
 
 /** 웹 app/(site)/news/create — 관리자만 접근. ?newsId= 가 있으면 수정 */
 export default function NewsCreateScreen() {
+  // 로그인이 필요한 화면 (웹 middleware 의 /*/create 와 같음)
+  useSignInRedirect()
   const { newsId } = useLocalSearchParams<{ newsId?: string }>()
   const { isReady, isLoggedIn, user } = useAuth()
 

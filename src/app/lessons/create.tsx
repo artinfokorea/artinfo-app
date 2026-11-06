@@ -7,6 +7,7 @@ import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, T
 import * as yup from "yup"
 
 import { DistrictSheet } from "@/components/lessons/DistrictSheet"
+import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { Icon } from "@/components/ui/Icon"
 import { ImagePickerField } from "@/components/ui/ImagePickerField"
 import { Button, Loading } from "@/components/ui/primitives"
@@ -22,6 +23,8 @@ type LessonFormData = yup.InferType<typeof lessonSchema>
 
 /** 웹 app/(site)/lessons/create + LessonForm. `?id=` 가 있으면 수정 모드 (웹의 ?type=edit) */
 export default function LessonCreateScreen() {
+  // 로그인이 필요한 화면 (웹 middleware 의 /*/create 와 같음)
+  useSignInRedirect()
   const { id } = useLocalSearchParams<{ id?: string }>()
   const lessonId = id ? Number(id) : undefined
   const isEdit = !!lessonId

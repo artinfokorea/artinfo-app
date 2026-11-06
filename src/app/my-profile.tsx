@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { router, Stack } from "expo-router"
 import React, { useState } from "react"
-import { Pressable, Text, View } from "react-native"
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native"
 
 import { getErrorMessage } from "@/components/auth/ControlledField"
 import { FormScreen } from "@/components/auth/FormScreen"
@@ -12,10 +12,11 @@ import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { Loading } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
+import { useAuth } from "@/lib/auth"
 import { queries } from "@/lib/queries"
 import { checkEmailVerificationCode, sendEmailVerificationCode } from "@/services/auth"
 import { sendPhoneVerificationCode, verifyPhoneCode } from "@/services/system"
-import { updateUser, updateUserPassword, updateUserPhone } from "@/services/users"
+import { updateUser, updateUserPassword, updateUserPhone, withdrawUser } from "@/services/users"
 import { SchoolType } from "@/types/lessons"
 
 /** 웹 app/(private)/my-profile + components/profile/ProfileContainer */
@@ -23,6 +24,7 @@ export default function MyProfileScreen() {
   const canView = useSignInRedirect()
   const queryClient = useQueryClient()
   const { successToast, errorToast } = useToast()
+  const { signOut } = useAuth()
 
   const [isUpdateForm, setIsUpdateForm] = useState(false)
   const [isUpdateProfileLoading, setIsUpdateProfileLoading] = useState(false)
@@ -30,6 +32,36 @@ export default function MyProfileScreen() {
   const [isUpdatePasswordLoading, setIsUpdatePasswordLoading] = useState(false)
   const [isPhoneDialog, setIsPhoneDialog] = useState(false)
   const [isPasswordDialog, setIsPasswordDialog] = useState(false)
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
+
+  /** 회원탈퇴 (앱 심사 지침 5.1.1(v)) — 두 번 확인 후 서버 탈퇴 → 로그아웃 */
+  const confirmWithdraw = () => {
+    Alert.alert(
+      "회원탈퇴",
+      "탈퇴하면 프로필·학력·연락처 등 개인정보가 삭제되고 되돌릴 수 없습니다.\n작성한 글과 댓글은 '탈퇴회원' 이름으로 남습니다.\n정말 탈퇴하시겠습니까?",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "탈퇴",
+          style: "destructive",
+          onPress: async () => {
+            if (isWithdrawing) return
+            setIsWithdrawing(true)
+            try {
+              await withdrawUser()
+              await signOut()
+              successToast("탈퇴가 완료되었습니다.")
+              router.replace("/auth/sign-in")
+            } catch (error: any) {
+              errorToast(error?.message ?? "탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요.")
+            } finally {
+              setIsWithdrawing(false)
+            }
+          },
+        },
+      ],
+    )
+  }
 
   const { data: user, isLoading } = useQuery({ ...queries.users.detail(), enabled: canView })
 
@@ -130,11 +162,6 @@ export default function MyProfileScreen() {
       <Stack.Screen
         options={{
           title: "내 정보",
-          headerRight: () => (
-            <Pressable onPress={() => router.push("/my-activities")} hitSlop={8}>
-              <Text style={{ color: colors.main, fontWeight: "600" }}>내 활동</Text>
-            </Pressable>
-          ),
         }}
       />
       {!canView || isLoading ? (
@@ -151,6 +178,11 @@ export default function MyProfileScreen() {
               handlePasswordDialog={() => setIsPasswordDialog(true)}
               handleProfile={updateProfile}
             />
+            {!isUpdateForm ? (
+              <Pressable onPress={confirmWithdraw} disabled={isWithdrawing} style={styles.withdraw} hitSlop={8}>
+                <Text style={styles.withdrawText}>{isWithdrawing ? "탈퇴 처리 중…" : "회원탈퇴"}</Text>
+              </Pressable>
+            ) : null}
           </View>
         </FormScreen>
       )}
@@ -172,3 +204,8 @@ export default function MyProfileScreen() {
     </>
   )
 }
+
+const styles = StyleSheet.create({
+  withdraw: { alignSelf: "center", marginTop: 40, paddingVertical: 8 },
+  withdrawText: { fontSize: 13, color: colors.coolgray, textDecorationLine: "underline" },
+})

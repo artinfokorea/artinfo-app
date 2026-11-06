@@ -68,7 +68,7 @@ export const useAuth = () => {
 
 /**
  * 로그인이 필요한 동작 앞에서 호출한다. 로그인 상태가 아니면 로그인 화면으로 보내고 false 를 돌려준다.
- * (웹 middleware 가 /my-profile, /my-activities, /\*\/create 를 막는 것과 같은 역할)
+ * (웹 middleware 가 /my-profile, /\*\/create 를 막는 것과 같은 역할)
  */
 export const useRequireAuth = () => {
   const { isLoggedIn } = useAuth()
