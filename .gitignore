@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# App Store 스크린샷 원본 (용량) — ASC 에 올린 뒤 로컬 보관
+store/screenshots/
