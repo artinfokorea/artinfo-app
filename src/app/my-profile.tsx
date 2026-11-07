@@ -143,7 +143,11 @@ export default function MyProfileScreen() {
       ? "기기 설정에서 알림이 꺼져 있어 푸시를 받을 수 없습니다. 설정 앱에서 아트인포 알림을 허용해 주세요."
       : pushStatus === "unavailable"
         ? "이 기기에서는 푸시 알림을 받을 수 없습니다."
-        : "새 채용 공고가 올라오면 푸시로 알려드려요."
+        : pushStatus === "error"
+          ? "이 기기를 알림 대상으로 등록하지 못했습니다. 아래 '다시 등록'을 눌러 주세요."
+          : pushStatus === "idle"
+            ? "알림 등록을 준비하고 있어요."
+            : "이 기기가 알림 대상으로 등록돼 있어요. 새 채용 공고가 올라오면 푸시로 알려드려요."
 
   const refreshUser = () =>
     queryClient.invalidateQueries({
@@ -323,6 +327,14 @@ export default function MyProfileScreen() {
               switchValue={pushPreferences?.job ?? true}
               onToggle={toggleJobPush}
             />
+            {pushStatus === "error" || pushStatus === "denied" ? (
+              <SettingsRow
+                icon="arrow.clockwise"
+                iconColor={colors.main}
+                label="다시 등록"
+                onPress={() => void syncPushToken()}
+              />
+            ) : null}
           </SettingsGroup>
 
           <SettingsGroup title="계정">

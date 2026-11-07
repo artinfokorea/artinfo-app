@@ -18,8 +18,16 @@ Notifications.setNotificationHandler({
   }),
 })
 
-/** 푸시 페이로드(data)로 이동할 화면 — 서버 ArtinfoPushService 가 넣는 { type, jobId } */
+/**
+ * 푸시 페이로드(data)로 이동할 화면 — 서버 ArtinfoPushService 가 넣는 { type, jobId? }
+ * - jobs: 매일 12시 채용 요약 → 채용 탭
+ * - job: 공고 하나 → 상세 (이전 형식, 호환용)
+ */
 const navigateForPushData = (data: Record<string, unknown> | undefined) => {
+  if (data?.type === "jobs") {
+    router.push("/(tabs)/jobs")
+    return
+  }
   if (data?.type === "job" && typeof data.jobId === "string" && data.jobId) {
     router.push(`/jobs/${data.jobId}`)
   }
