@@ -1,14 +1,13 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { router, Stack } from "expo-router"
 import React, { useState } from "react"
-import { Alert, ScrollView, StyleSheet, View } from "react-native"
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { getErrorMessage } from "@/components/auth/ControlledField"
-import { FormScreen } from "@/components/auth/FormScreen"
 import { PasswordFormData, PasswordSheet } from "@/components/profile/PasswordSheet"
 import { PhoneSheet } from "@/components/profile/PhoneSheet"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
-import { ProfileForm, ProfileFormData } from "@/components/profile/ProfileForm"
+import { ProfileEditForm, ProfileFormData } from "@/components/profile/ProfileEditForm"
 import { SettingsGroup, SettingsRow } from "@/components/profile/SettingsGroup"
 import { useSignInRedirect } from "@/components/profile/useSignInRedirect"
 import { LegalLinks } from "@/components/auth/LegalLinks"
@@ -16,9 +15,11 @@ import { Loading } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
 import { useAuth } from "@/lib/auth"
+import { syncPushToken, usePushStatus } from "@/lib/push"
 import filters from "@/lib/filters"
 import { queries } from "@/lib/queries"
 import { checkEmailVerificationCode, sendEmailVerificationCode } from "@/services/auth"
+import { PushPreferences, updatePushPreferences } from "@/services/push"
 import { sendPhoneVerificationCode, verifyPhoneCode } from "@/services/system"
 import { updateUser, updateUserPassword, updateUserPhone, withdrawUser } from "@/services/users"
 import { SchoolType } from "@/types/lessons"
@@ -31,14 +32,14 @@ export default function MyProfileScreen() {
   const { signOut } = useAuth()
 
   const [isUpdateForm, setIsUpdateForm] = useState(false)
+  const [isFormDirty, setIsFormDirty] = useState(false)
   const [isUpdateProfileLoading, setIsUpdateProfileLoading] = useState(false)
   const [isUpdatePhoneLoading, setIsUpdatePhoneLoading] = useState(false)
   const [isUpdatePasswordLoading, setIsUpdatePasswordLoading] = useState(false)
   const [isPhoneDialog, setIsPhoneDialog] = useState(false)
   const [isPasswordDialog, setIsPasswordDialog] = useState(false)
   const [isWithdrawing, setIsWithdrawing] = useState(false)
-  // TODO: 서버 알림 설정 API 연동 전 임시 로컬 상태
-  const [jobPush, setJobPush] = useState(true)
+  const pushStatus = usePushStatus()
   const filter = filters()
 
   /** 회원탈퇴 (앱 심사 지침 5.1.1(v)) — 두 번 확인 후 서버 탈퇴 → 로그아웃 */
@@ -70,6 +71,18 @@ export default function MyProfileScreen() {
     )
   }
 
+  /** 수정 취소 — 고친 게 있으면 한 번 확인한다 */
+  const cancelEdit = () => {
+    if (!isFormDirty) {
+      setIsUpdateForm(false)
+      return
+    }
+    Alert.alert("수정을 취소할까요?", "바꾼 내용이 저장되지 않습니다.", [
+      { text: "계속 수정", style: "cancel" },
+      { text: "취소", style: "destructive", onPress: () => setIsUpdateForm(false) },
+    ])
+  }
+
   const confirmSignOut = () => {
     Alert.alert("로그아웃", "로그아웃 하시겠습니까?", [
       { text: "취소", style: "cancel" },
@@ -84,9 +97,58 @@ export default function MyProfileScreen() {
     ])
   }
 
-  const { data: user, isLoading } = useQuery({ ...queries.users.detail(), enabled: canView })
+  const { data: user, isLoading } = useQuery({
+    ...queries.users.detail(),
+    enabled: canView,
+  })
+  const { data: pushPreferences } = useQuery({
+    ...queries.push.preferences(),
+    enabled: canView,
+  })
 
-  const refreshUser = () => queryClient.invalidateQueries({ queryKey: queries.users.detail().queryKey })
+  /** 알림 스위치 — 서버 설정을 바꾸고(낙관적 반영), 켤 때는 기기 권한도 확인해 꺼져 있으면 설정 앱으로 안내 */
+  const pushMutation = useMutation({
+    mutationFn: (patch: Partial<PushPreferences>) => updatePushPreferences(patch),
+    onMutate: async patch => {
+      const key = queries.push.preferences().queryKey
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<PushPreferences>(key)
+      queryClient.setQueryData<PushPreferences>(key, current => ({
+        ...(current ?? { job: true }),
+        ...patch,
+      }))
+      return { previous }
+    },
+    onError: (_error, _patch, context) => {
+      queryClient.setQueryData(queries.push.preferences().queryKey, context?.previous)
+      errorToast("알림 설정 저장에 실패했습니다.")
+    },
+    onSuccess: data => queryClient.setQueryData(queries.push.preferences().queryKey, data),
+  })
+
+  const toggleJobPush = async (enabled: boolean) => {
+    pushMutation.mutate({ job: enabled })
+    if (!enabled) return
+    const status = await syncPushToken()
+    if (status === "denied") {
+      Alert.alert("알림이 꺼져 있어요", "기기 설정에서 아트인포 알림을 허용해야 푸시를 받을 수 있습니다.", [
+        { text: "나중에", style: "cancel" },
+        { text: "설정 열기", onPress: () => Linking.openSettings() },
+      ])
+    }
+  }
+
+  const pushFooter =
+    pushStatus === "denied"
+      ? "기기 설정에서 알림이 꺼져 있어 푸시를 받을 수 없습니다. 설정 앱에서 아트인포 알림을 허용해 주세요."
+      : pushStatus === "unavailable"
+        ? "이 기기에서는 푸시 알림을 받을 수 없습니다."
+        : "새 채용 공고가 올라오면 푸시로 알려드려요."
+
+  const refreshUser = () =>
+    queryClient.invalidateQueries({
+      queryKey: queries.users.detail().queryKey,
+    })
 
   const updateProfile = async (payload: ProfileFormData) => {
     const { bachellor, master, doctor, birth, imageUrl, majors, nickname, name } = payload
@@ -184,30 +246,38 @@ export default function MyProfileScreen() {
     { type: SchoolType.DOCTOR, label: "박사" },
   ]
   const schoolRows = schoolLabels
-    .map(({ type, label }) => ({ type, label, name: user?.schools?.find(school => school.type === type)?.name }))
+    .map(({ type, label }) => ({
+      type,
+      label,
+      name: user?.schools?.find(school => school.type === type)?.name,
+    }))
     .filter((school): school is { type: SchoolType; label: string; name: string } => !!school.name)
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: "내 정보",
+          title: isUpdateForm ? "프로필 수정" : "내 정보",
+          headerBackVisible: !isUpdateForm,
+          gestureEnabled: !isUpdateForm,
+          headerLeft: isUpdateForm
+            ? () => (
+                <Pressable onPress={cancelEdit} hitSlop={8}>
+                  <Text style={styles.headerCancel}>취소</Text>
+                </Pressable>
+              )
+            : undefined,
         }}
       />
       {!canView || isLoading ? (
         <Loading />
       ) : isUpdateForm ? (
-        <FormScreen contentStyle={{ paddingHorizontal: 24 }}>
-          <ProfileForm
-            user={user}
-            isUpdateForm
-            isUpdateProfileLoading={isUpdateProfileLoading}
-            handleUpdateForm={() => setIsUpdateForm(false)}
-            handlePhoneDialog={() => setIsPhoneDialog(true)}
-            handlePasswordDialog={() => setIsPasswordDialog(true)}
-            handleProfile={updateProfile}
-          />
-        </FormScreen>
+        <ProfileEditForm
+          user={user}
+          isSubmitting={isUpdateProfileLoading}
+          onSubmit={updateProfile}
+          onDirtyChange={setIsFormDirty}
+        />
       ) : (
         <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
           <ProfileHeader user={user} onEdit={() => setIsUpdateForm(true)} />
@@ -245,16 +315,13 @@ export default function MyProfileScreen() {
             )}
           </SettingsGroup>
 
-          <SettingsGroup
-            title="알림"
-            footer="새 채용 공고가 올라오면 푸시로 알려드려요. 기기 설정에서 알림을 허용해야 받을 수 있습니다."
-          >
+          <SettingsGroup title="알림" footer={pushFooter}>
             <SettingsRow
               icon="bell.badge"
               iconColor={colors.main}
               label="채용 공고 알림"
-              switchValue={jobPush}
-              onToggle={setJobPush}
+              switchValue={pushPreferences?.job ?? true}
+              onToggle={toggleJobPush}
             />
           </SettingsGroup>
 
@@ -298,4 +365,5 @@ export default function MyProfileScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface2 },
   content: { padding: 16, paddingBottom: 48, gap: 24 },
+  headerCancel: { fontSize: 16, color: colors.ink2 },
 })
