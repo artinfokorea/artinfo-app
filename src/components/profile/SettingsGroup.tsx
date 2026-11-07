@@ -96,11 +96,12 @@ export const SettingsRow = ({
   ) : null
 
   return (
+    // 스위치 행은 행 자체를 누르지 않게 둔다 — 행 탭과 스위치의 onValueChange 가 같이 발생해 값이 두 번 뒤집히는 걸 막는다
     <Pressable
-      onPress={isSwitch ? () => onToggle?.(!switchValue) : onPress}
-      disabled={disabled || (!pressable && !isSwitch)}
+      onPress={onPress}
+      disabled={disabled || !pressable}
       style={({ pressed }) => [styles.row, pressed && pressable && styles.rowPressed]}
-      accessibilityRole={isSwitch ? "switch" : pressable ? "button" : undefined}
+      accessibilityRole={pressable ? "button" : undefined}
     >
       {icon ? (
         <View style={styles.iconWrap}>
