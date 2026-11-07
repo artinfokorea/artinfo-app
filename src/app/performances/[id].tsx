@@ -5,6 +5,7 @@ import React, { useState } from "react"
 import { ActionSheetIOS, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { ItemManageBox } from "@/components/lessons/ListParts"
+import { KakaoMapView } from "@/components/performances/KakaoMapView"
 import { FallbackImage } from "@/components/ui/FallbackImage"
 import { HtmlContent } from "@/components/ui/HtmlContent"
 import { Icon } from "@/components/ui/Icon"
@@ -26,7 +27,7 @@ const DetailItem = ({ title, content }: { title: string; content?: string | numb
   </View>
 )
 
-/** 웹 KakaoMap 대신: 지도 앱(Apple 지도 / 카카오맵)으로 연다 */
+/** 지도 앱(Apple 지도 / 카카오맵)으로 열어 길찾기 */
 const openMap = (area: AREA, label: string) => {
   const name = encodeURIComponent(label)
   const apple = `http://maps.apple.com/?ll=${area.latitude},${area.longitude}&q=${name}`
@@ -140,9 +141,15 @@ export default function PerformanceDetailScreen() {
               )}
             </View>
           </View>
+          <KakaoMapView
+            latitude={area.latitude}
+            longitude={area.longitude}
+            label={placeName || area.name}
+            style={{ marginBottom: 12 }}
+          />
           <Pressable style={styles.mapButton} onPress={() => openMap(area, placeName || area.name)}>
             <Icon name="map" size={18} color={colors.main} />
-            <Text style={{ color: colors.main, fontWeight: "700" }}>지도에서 보기</Text>
+            <Text style={{ color: colors.main, fontWeight: "700" }}>지도 앱에서 길찾기</Text>
           </Pressable>
         </View>
       )}

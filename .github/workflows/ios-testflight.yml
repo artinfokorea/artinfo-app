@@ -2,6 +2,7 @@
 # 서명은 EAS 가 아니라 Xcode 자동 서명 + App Store Connect API 키(클라우드 관리 인증서)로 한다 — 인증서·프로파일 수동 관리 없음.
 # 실행: gh workflow run ios-testflight.yml  (또는 Actions 탭에서 Run workflow)
 # 필요한 시크릿: ASC_KEY_ID · ASC_ISSUER_ID · ASC_PRIVATE_KEY (App Store Connect API 키, App Manager)
+#            EXPO_PUBLIC_KAKAO_REST_API_KEY · EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY (카카오 로그인·지도, 번들 시 인라인)
 # 빌드 번호 = GitHub run number (CURRENT_PROJECT_VERSION), 버전 = app.json version
 name: iOS TestFlight
 
@@ -22,6 +23,8 @@ jobs:
       ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
       FASTLANE_SKIP_UPDATE_CHECK: '1'
       APP_ID: com.artinfokorea.app
+      EXPO_PUBLIC_KAKAO_REST_API_KEY: ${{ secrets.EXPO_PUBLIC_KAKAO_REST_API_KEY }}
+      EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY: ${{ secrets.EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY }}
       TEAM_ID: D7RV3R6ALY
     steps:
       - uses: actions/checkout@v4

@@ -30,8 +30,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (카카오 키 등 — 퍼블릭 저장소라 절대 커밋하지 않는다)
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
