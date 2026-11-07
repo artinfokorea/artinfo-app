@@ -30,6 +30,7 @@ import {
 } from "@/services/news"
 import { getProvinces } from "@/services/system"
 import { getBlockedUserIds } from "@/services/moderation"
+import { getPushPreferences } from "@/services/push"
 import { getMe } from "@/services/users"
 import { ListRequest } from "@/interface"
 import { JobsRequest, PartTimeJobRequest } from "@/interface/jobs"
@@ -116,6 +117,13 @@ const users = createQueryKeys("users", {
   detail: () => ({
     queryKey: [""],
     queryFn: () => getMe(),
+  }),
+})
+
+const push = createQueryKeys("push", {
+  preferences: () => ({
+    queryKey: [""],
+    queryFn: () => getPushPreferences(),
   }),
 })
 
@@ -254,4 +262,5 @@ export const queries = mergeQueryKeys(
   performances,
   posts,
   moderation,
+  push,
 )

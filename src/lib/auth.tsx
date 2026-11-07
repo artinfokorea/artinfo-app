@@ -10,6 +10,7 @@ import React, {
 } from "react"
 
 import { authStore, AuthTokens, signOut as clearTokens } from "@/lib/auth-store"
+import { unregisterCurrentPushToken } from "@/lib/push"
 import { queries } from "@/lib/queries"
 import { USER } from "@/types/users"
 
@@ -48,6 +49,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [isLoggedIn, queryClient])
 
   const signOut = useCallback(async () => {
+    // 이 기기 푸시 토큰을 먼저 해제해야 로그아웃 뒤 알림이 오지 않는다 (토큰이 아직 유효할 때)
+    await unregisterCurrentPushToken()
     await clearTokens()
     queryClient.clear()
   }, [queryClient])

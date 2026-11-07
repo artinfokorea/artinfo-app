@@ -60,7 +60,7 @@ interface ApiRequestMethods {
   post<T>(url: string, body?: any, config?: AxiosRequestConfig): Promise<T>
   put<T>(url: string, body?: any): Promise<T>
   patch<T>(url: string, body?: any): Promise<T>
-  delete<T>(url: string): Promise<T>
+  delete<T>(url: string, body?: any): Promise<T>
 }
 
 const wrap = (instance: typeof publicInstance): ApiRequestMethods => ({
@@ -70,7 +70,7 @@ const wrap = (instance: typeof publicInstance): ApiRequestMethods => ({
     instance.post(url, body, config ?? {}) as Promise<any>,
   put: (url, body) => instance.put(url, body) as Promise<any>,
   patch: (url, body) => instance.patch(url, body) as Promise<any>,
-  delete: url => instance.delete(url) as Promise<any>,
+  delete: (url, body) => instance.delete(url, body ? { data: body } : undefined) as Promise<any>,
 })
 
 export const authApiRequest = wrap(authInstance)

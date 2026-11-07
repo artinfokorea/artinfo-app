@@ -9,6 +9,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 import { ActivityTracker } from "@/components/provider/ActivityTracker"
 import { ToastProvider } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { AuthProvider, useAuth } from "@/lib/auth"
 
 SplashScreen.preventAutoHideAsync()
@@ -34,6 +35,12 @@ const AuthGate = () => {
   return null
 }
 
+/** 로그인 후 푸시 토큰 등록·알림 탭 이동 (AuthProvider 안에서 실행) */
+const PushNotifications = () => {
+  usePushNotifications()
+  return null
+}
+
 export default function RootLayout() {
   const [queryClient] = useState(
     () =>
@@ -52,6 +59,7 @@ export default function RootLayout() {
             <ToastProvider>
               <AuthGate />
               <ActivityTracker />
+              <PushNotifications />
               <StatusBar style="dark" />
               <Stack
                 screenOptions={{
