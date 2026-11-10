@@ -38,6 +38,8 @@ import { LessonsRequest } from "@/interface/lessons"
 import { ArtFieldRequest } from "@/interface/majors"
 import { AdvertisementType } from "@/types/ads"
 import { createQueryKeys, mergeQueryKeys } from "@lukemorales/query-key-factory"
+import { getCompetition, getCompetitions, getInfiniteCompetitions } from "@/services/competitions"
+import { CompetitionsRequest } from "@/interface/competitions"
 import { getNewsComments, getPostsComments } from "@/services/comments"
 import { CommentsRequest, PostCommentsRequest } from "@/interface/comments"
 import {
@@ -158,6 +160,15 @@ const comments = createQueryKeys("comments", {
   }),
 })
 
+const competitions = createQueryKeys("competitions", {
+  detail: (id: number) => ({ queryKey: [id], queryFn: () => getCompetition(id) }),
+  list: (filters: CompetitionsRequest) => ({ queryKey: [{ filters }], queryFn: () => getCompetitions(filters) }),
+  infiniteList: (filters: CompetitionsRequest) => ({
+    queryKey: [{ filters }],
+    queryFn: ({ pageParam }: { pageParam: number }) => getInfiniteCompetitions({ ...filters, page: pageParam }),
+  }),
+})
+
 const jobs = createQueryKeys("jobs", {
   detail: (jobId: number) => ({
     queryKey: [jobId],
@@ -252,6 +263,7 @@ const moderation = createQueryKeys("moderation", {
 
 export const queries = mergeQueryKeys(
   ads,
+  competitions,
   jobs,
   majors,
   provinces,

@@ -6,11 +6,12 @@ import { ArtRow } from "@/components/home/ArtRow"
 import { BannerCarousel } from "@/components/home/BannerCarousel"
 import { NewsPreview, PostPreview } from "@/components/home/HomePreviews"
 import { LessonBanner } from "@/components/home/LessonBanner"
+import { MainCompetitionsRow } from "@/components/home/MainCompetitionsRow"
 import { MainJobsRow } from "@/components/home/MainJobsRow"
 import { colors } from "@/constants/theme"
 import { AdvertisementType } from "@/types/ads"
 
-/** 웹 app/(site)/page.tsx: 배너 → 공연 → 나눔/뉴스 → 채용 → 레슨 배너 → 전시 */
+/** 웹 app/(site)/page.tsx: 배너 → 공연 → 나눔/뉴스 → 채용 → 콩쿠르 → 레슨 배너 → 전시 */
 export default function HomeScreen() {
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
@@ -21,6 +22,7 @@ export default function HomeScreen() {
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["ads"] }),
         queryClient.refetchQueries({ queryKey: ["jobs"] }),
+        queryClient.refetchQueries({ queryKey: ["competitions"] }),
         queryClient.refetchQueries({ queryKey: ["posts"] }),
         queryClient.refetchQueries({ queryKey: ["news"] }),
       ])
@@ -42,6 +44,7 @@ export default function HomeScreen() {
         <NewsPreview />
       </View>
       <MainJobsRow />
+      <MainCompetitionsRow />
       <LessonBanner />
       <ArtRow type={AdvertisementType.EXHIBITION} title="전시" />
     </ScrollView>

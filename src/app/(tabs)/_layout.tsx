@@ -6,8 +6,8 @@ import { Icon } from "@/components/ui/Icon"
 import { colors } from "@/constants/theme"
 
 /**
- * 웹 하단 네비게이션(BottomNavigation): 채용 · 뉴스 · 나눔 · 레슨 · 공연.
- * 앱에서는 홈 탭을 추가하고 뉴스·나눔을 소통 탭으로 묶었으며, 문의/내 정보는 헤더 햄버거 메뉴(/menu)로 옮겼다.
+ * 하단 탭: 홈 · 채용 · 소식(나눔·콩쿠르·뉴스) · 레슨 · 공연 — 웹 모바일 BottomNavigation 과 같은 구성.
+ * 문의/내 정보는 헤더 햄버거 메뉴(/menu).
  */
 export default function TabLayout() {
   return (
@@ -37,10 +37,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="community"
         options={{
-          title: "소통",
-          tabBarIcon: ({ color }) => (
-            <Icon name="bubble.left.and.bubble.right.fill" color={color} size={22} />
-          ),
+          title: "소식",
+          tabBarIcon: ({ color }) => <Icon name="newspaper.fill" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
