@@ -1,11 +1,12 @@
 import { yupResolver } from "@hookform/resolvers/yup"
 import React, { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, FieldErrors, useForm } from "react-hook-form"
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { FieldError } from "@/components/jobs/FormFields"
 import { ImagePickerField } from "@/components/ui/ImagePickerField"
 import { Button, Chip, TextField } from "@/components/ui/primitives"
+import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
 import { competitionSchema } from "@/lib/schemas"
 import { UploadTarget } from "@/types"
@@ -58,6 +59,8 @@ const APPLY_METHODS: { value: ApplyMethod; label: string; desc: string }[] = [
  */
 export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => {
   const [step, setStep] = useState(0)
+  const [submitted, setSubmitted] = useState(false)
+  const { errorToast } = useToast()
   const {
     control,
     handleSubmit,
@@ -101,8 +104,30 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
   }
 
   const next = async () => {
-    if (!(await trigger(STEP_FIELDS[step]))) return
+    if (!(await trigger(STEP_FIELDS[step]))) {
+      errorToast("입력을 확인해 주세요.")
+      return
+    }
     setStep(s => Math.min(s + 1, STEPS.length - 1))
+  }
+
+  /** 오류가 난 필드가 어느 단계에 있는지 */
+  const stepOf = (field: string) => STEP_FIELDS.findIndex(fields => fields.includes(field as keyof CompetitionFormData))
+  const errorList = Object.entries(errors)
+    .map(([field, error]) => ({ field, step: stepOf(field), message: (error as { message?: string })?.message ?? "" }))
+    .filter(e => e.message)
+    .sort((a, b) => a.step - b.step)
+
+  /** 등록 버튼을 눌렀는데 다른 단계에 오류가 있으면 — 그 단계로 옮기고 무엇이 문제인지 바로 보여준다 */
+  const onInvalid = (invalid: FieldErrors<CompetitionFormData>) => {
+    setSubmitted(true)
+    const first = Object.keys(invalid)
+      .map(stepOf)
+      .filter(i => i >= 0)
+      .sort((a, b) => a - b)[0]
+    const firstMessage = Object.values(invalid).find(e => e?.message)?.message as string | undefined
+    if (first !== undefined && first !== step) setStep(first)
+    errorToast(`${first !== undefined ? `${first + 1}단계 ` : ""}입력을 확인해 주세요${firstMessage ? `: ${firstMessage}` : "."}`)
   }
 
   const text = (name: keyof CompetitionFormData, props: Partial<React.ComponentProps<typeof TextField>> = {}) => (
@@ -245,12 +270,25 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
           </View>
         ) : null}
 
+        {submitted && errorList.length > 0 ? (
+          <View style={styles.errorBox} accessibilityRole="alert">
+            <Text style={styles.errorTitle}>아직 고쳐야 할 항목이 있어요</Text>
+            {errorList.map(e => (
+              <Pressable key={e.field} onPress={() => setStep(e.step)} hitSlop={4}>
+                <Text style={styles.errorItem}>
+                  • {e.step + 1}단계 · {e.message}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
         <View style={styles.nav}>
           <Button title="이전" variant="outline" disabled={step === 0} onPress={() => setStep(s => Math.max(0, s - 1))} />
           {step < STEPS.length - 1 ? (
             <Button title="다음" onPress={next} />
           ) : (
-            <Button title={competition ? "수정 완료" : "등록 요청"} loading={isLoading} onPress={() => void handleSubmit(onSubmit)()} />
+            <Button title={competition ? "수정 완료" : "등록 요청"} loading={isLoading} onPress={() => void handleSubmit(onSubmit, onInvalid)()} />
           )}
         </View>
       </ScrollView>
@@ -279,4 +317,7 @@ const styles = StyleSheet.create({
   radioLabel: { fontSize: 14, fontWeight: "600", color: colors.ink },
   radioDesc: { fontSize: 13, color: colors.muted, marginTop: 2 },
   nav: { flexDirection: "row", justifyContent: "space-between", gap: 10, marginTop: 20 },
+  errorBox: { marginTop: 16, borderWidth: 1, borderColor: "#F5C2C7", backgroundColor: "#FDECEC", borderRadius: 12, padding: 12, gap: 4 },
+  errorTitle: { fontSize: 13, fontWeight: "700", color: "#B42318", marginBottom: 2 },
+  errorItem: { fontSize: 13, lineHeight: 20, color: "#B42318", textDecorationLine: "underline" },
 })

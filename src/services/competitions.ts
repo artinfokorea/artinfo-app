@@ -1,8 +1,21 @@
 import { COMPETITION } from "@/types/competitions"
 import { publicApiRequest, authApiRequest, QueryParams } from "."
-import { exceptionHandler } from "@/lib/exception-handler"
+import axios from "axios"
 import { DetailApiResponse, ListApiResponse, ListResponse, ScrollApiResponse, SuccessResponse } from "@/interface"
 import { CompetitionPayload, CompetitionsRequest } from "@/interface/competitions"
+
+/** 서버가 보낸 메시지(검증 실패 등)를 그대로 쓴다 — 없으면 기본 문구 */
+const competitionError = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const message = (error.response?.data as { message?: string | string[] } | undefined)?.message
+    if (Array.isArray(message) && message.length) return message.join("\n")
+    if (typeof message === "string" && message.trim()) return message
+    if (error.response?.status === 401) return "로그인이 필요합니다."
+    if (error.response?.status === 403) return "이 공고를 수정하거나 삭제할 권한이 없습니다."
+    if (error.response?.status === 404) return "공고를 찾을 수 없습니다."
+  }
+  return fallback
+}
 
 const toParams = (request: CompetitionsRequest) => {
   const params = new QueryParams()
@@ -21,7 +34,7 @@ export const getCompetitions = async (request: CompetitionsRequest): Promise<Lis
     })
     return response.item
   } catch (error) {
-    throw new Error(exceptionHandler(error, "API getCompetitions error"))
+    throw new Error(competitionError(error, "콩쿠르 목록을 불러오지 못했습니다."))
   }
 }
 
@@ -43,7 +56,7 @@ export const getCompetition = async (id: number): Promise<COMPETITION> => {
     const response = await authApiRequest.get<DetailApiResponse<COMPETITION>>(`/competitions/${id}`)
     return response.item
   } catch (error) {
-    throw new Error(exceptionHandler(error, "API getCompetition error"))
+    throw new Error(competitionError(error, "공고를 불러오지 못했습니다."))
   }
 }
 
@@ -57,7 +70,7 @@ export const createCompetition = async (
     )
     return response.item
   } catch (error) {
-    throw new Error(exceptionHandler(error, "API createCompetition error"))
+    throw new Error(competitionError(error, "등록에 실패했습니다. 입력을 확인해 주세요."))
   }
 }
 
@@ -65,7 +78,7 @@ export const updateCompetition = async (id: number, payload: CompetitionPayload)
   try {
     return await authApiRequest.put<SuccessResponse>(`/competitions/${id}`, payload)
   } catch (error) {
-    throw new Error(exceptionHandler(error, "API updateCompetition error"))
+    throw new Error(competitionError(error, "수정에 실패했습니다. 입력을 확인해 주세요."))
   }
 }
 
@@ -73,6 +86,6 @@ export const deleteCompetition = async (id: number): Promise<SuccessResponse> =>
   try {
     return await authApiRequest.delete<SuccessResponse>(`/competitions/${id}`)
   } catch (error) {
-    throw new Error(exceptionHandler(error, "API deleteCompetition error"))
+    throw new Error(competitionError(error, "삭제에 실패했습니다."))
   }
 }
