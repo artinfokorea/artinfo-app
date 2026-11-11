@@ -1,4 +1,4 @@
-# Android 릴리즈 번들(.aab) 빌드 → (시크릿이 있으면) Play Console 내부 테스트 트랙 업로드. iOS 의 ios-testflight.yml 과 짝.
+# Android 릴리즈 번들(.aab)·테스트 설치용 APK 빌드 → (시크릿이 있으면) Play Console 내부 테스트 트랙 업로드. iOS 의 ios-testflight.yml 과 짝.
 # 실행: gh workflow run android-release.yml  (또는 Actions 탭에서 Run workflow)
 # 필요한 시크릿:
 #   ANDROID_KEYSTORE_BASE64 · ANDROID_KEYSTORE_PASSWORD · ANDROID_KEY_ALIAS · ANDROID_KEY_PASSWORD  (업로드 키, scripts/android-keystore.sh)
@@ -76,8 +76,19 @@ jobs:
         run: |
           CI=1 npx expo prebuild --platform android --clean
           printf '\napply from: "../../scripts/android-signing.gradle"\n' >> android/app/build.gradle
-          cd android && ./gradlew :app:bundleRelease --no-daemon
+          cd android && ./gradlew :app:bundleRelease :app:assembleRelease --no-daemon
           cd .. && cp android/app/build/outputs/bundle/release/app-release.aab ./artinfo.aab
+          cp android/app/build/outputs/apk/release/app-release.apk ./artinfo.apk
+
+      # 테스트 설치용 APK — Actions 실행 페이지의 Artifacts 에서 내려받아 폰에 설치 (Play 제출은 .aab)
+      - name: Upload apk artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artinfo-android-apk
+          path: ./artinfo.apk
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload aab artifact
         if: always()
