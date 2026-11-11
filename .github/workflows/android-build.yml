@@ -1,0 +1,117 @@
+# Android 빌드(.aab) → Google Play 내부 테스트 제출. 온기 android-build.yml 과 같은 구조 — EAS 클라우드 한도와 무관하게 GitHub Linux 러너에서 로컬 빌드한다.
+# 실행: gh workflow run android-build.yml  (또는 Actions 탭에서 Run workflow)
+# 필요한 시크릿: EXPO_TOKEN (빌드·서명 키·환경변수, https://expo.dev/accounts/ddoniel/settings/access-tokens)
+#            PLAY_SERVICE_ACCOUNT_JSON (Play 제출 서비스 계정 키 전문 — 없으면 .aab 아티팩트만 남긴다)
+#            GOOGLE_SERVICES_JSON (Firebase google-services.json 전문 — Android 푸시. 퍼블릭 저장소라 파일을 커밋하지 않는다)
+# 서명 키스토어와 카카오 키(EXPO_PUBLIC_KAKAO_*)는 EAS 프로젝트(@ddoniel/artinfo-app)에 저장된 것을 쓴다. versionCode 는 원격 자동 증가.
+# 빌드는 됐는데 제출만 실패했으면 .aab 아티팩트를 받아 Mac 에서 제출할 수 있다:
+#   gh run download <run-id> -n artinfo-android-aab -D <dir>
+#   npx eas-cli submit --platform android --profile production --path <dir>/artinfo.aab --non-interactive
+name: Android Internal
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk:
+        description: '테스트 설치용 APK 도 같이 만들기 (preview 프로필, Play 에는 안 올림)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: android-build
+  cancel-in-progress: false
+
+jobs:
+  build-and-submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Check EAS login
+        run: eas whoami
+
+      # Firebase 설정 — 시크릿이 비어 있으면 푸시만 빠진 채 빌드된다 (app.config.js 가 파일 있을 때만 넣는다)
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > google-services.json
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON 시크릿이 없어 Android 푸시 없이 빌드합니다"
+          fi
+
+      - name: Build (local, production)
+        run: eas build --platform android --profile production --local --non-interactive --output ./artinfo.aab
+
+      - name: Upload aab artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artinfo-android-aab
+          path: ./artinfo.aab
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Build test APK (preview)
+        if: inputs.apk
+        run: eas build --platform android --profile preview --local --non-interactive --output ./artinfo.apk
+
+      - name: Upload apk artifact
+        if: inputs.apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: artinfo-android-apk
+          path: ./artinfo.apk
+          retention-days: 7
+
+      # iOS 와 같은 방식 — EAS Submit 큐를 거치지 않고 fastlane 으로 Play Developer API 에 직접 올린다 (내부 테스트 트랙)
+      - uses: ruby/setup-ruby@v1
+        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        with:
+          ruby-version: '3.3'
+
+      - name: Upload to Play internal testing
+        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          FASTLANE_SKIP_UPDATE_CHECK: '1'
+        run: |
+          gem install fastlane --no-document
+          mkdir -p fastlane
+          cat > fastlane/Fastfile <<'RUBY'
+          default_platform(:android)
+          lane :upload do
+            upload_to_play_store(
+              package_name: 'com.artinfokorea.app',
+              json_key_data: ENV['PLAY_SERVICE_ACCOUNT_JSON'],
+              aab: './artinfo.aab',
+              track: 'internal',
+              release_status: 'completed',
+              skip_upload_metadata: true,
+              skip_upload_changelogs: true,
+              skip_upload_images: true,
+              skip_upload_screenshots: true,
+            )
+          end
+          RUBY
+          fastlane upload

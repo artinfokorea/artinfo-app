@@ -1,0 +1,59 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files (카카오 키 등 — 퍼블릭 저장소라 절대 커밋하지 않는다)
+.env
+.env.*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/ios
+/android
+
+# App Store 스크린샷 원본 (용량) — ASC 에 올린 뒤 로컬 보관
+store/screenshots/
+
+# 로컬 fastlane 실행 산출물
+fastlane/
+
+# Android: Firebase 설정·서명 키 (퍼블릭 저장소 — CI 는 GitHub Secrets 로 만든다)
+*.keystore
+
+# Play 제출용 서비스 계정 키 (온기와 같은 이름)
+google-play-service-account.json
+
+# (.easignore) google-services.json 은 CI 가 시크릿으로 만들어 빌드에 넣는다 — .gitignore 와 달리 제외하지 않음
