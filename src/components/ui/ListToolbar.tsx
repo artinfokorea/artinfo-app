@@ -120,7 +120,7 @@ export const ListToolbar = ({
         </ScrollView>
       ) : null}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Modal statusBarTranslucent navigationBarTranslucent visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)} accessibilityLabel="필터 닫기" />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
           <View style={styles.handle} />

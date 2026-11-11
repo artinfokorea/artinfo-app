@@ -27,7 +27,7 @@ export const LessonApplyModal = ({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
+    <Modal statusBarTranslucent navigationBarTranslucent visible={visible} transparent animationType="fade" onRequestClose={close}>
       <KeyboardAvoidingView behavior="padding" style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
         <View style={styles.panel}>

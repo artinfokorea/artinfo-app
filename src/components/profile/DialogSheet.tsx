@@ -26,7 +26,7 @@ type Props = {
 export const DialogSheet = ({ visible, title, onClose, children, footer }: Props) => {
   const insets = useSafeAreaInsets()
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal statusBarTranslucent navigationBarTranslucent visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={{ flex: 1, justifyContent: "flex-end" }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

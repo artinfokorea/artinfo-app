@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import React from "react"
-import { ActionSheetIOS, Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { CommentContainer } from "@/components/comments/CommentContainer"
 import { ItemManageBox } from "@/components/posts/ItemManageBox"
@@ -18,6 +18,7 @@ import filters from "@/lib/filters"
 import { queries } from "@/lib/queries"
 import { deletePost } from "@/services/posts"
 import { PostCategoryLabel } from "@/types/posts"
+import { showActionSheet } from "@/lib/action-sheet"
 
 const filter = filters()
 
@@ -69,7 +70,7 @@ export default function PostDetailScreen() {
   /** 남의 글: 신고·차단 메뉴 (App Store 1.2 UGC) */
   const openModerationMenu = () => {
     const options = ["신고", "이 사용자 차단", "취소"]
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       { options, cancelButtonIndex: 2, destructiveButtonIndex: 1 },
       index => {
         if (index === 0) report("POST", post.id)

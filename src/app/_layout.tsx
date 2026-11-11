@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 
 import { ActivityTracker } from "@/components/provider/ActivityTracker"
+import { ActionSheetHost } from "@/components/ui/ActionSheet"
 import { ToastProvider } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
@@ -60,6 +61,7 @@ export default function RootLayout() {
               <AuthGate />
               <ActivityTracker />
               <PushNotifications />
+              <ActionSheetHost />
               <StatusBar style="dark" />
               <Stack
                 screenOptions={{

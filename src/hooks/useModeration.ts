@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useCallback, useMemo } from "react"
-import { ActionSheetIOS, Alert } from "react-native"
+import { Alert } from "react-native"
 
 import { useToast } from "@/components/ui/Toast"
 import { useAuth, useRequireAuth } from "@/lib/auth"
 import { queries } from "@/lib/queries"
 import { blockUser, REPORT_REASONS, reportContent, ReportTargetType } from "@/services/moderation"
+import { showActionSheet } from "@/lib/action-sheet"
 
 /** 내가 차단한 회원 ID 집합 — 글·댓글 목록에서 숨기는 데 쓴다 (비로그인은 빈 집합) */
 export const useBlockedUserIds = () => {
@@ -27,7 +28,7 @@ export const useModeration = () => {
     (targetType: ReportTargetType, targetId: number) => {
       if (!requireAuth()) return
       const options = [...REPORT_REASONS.map(reason => reason.label), "취소"]
-      ActionSheetIOS.showActionSheetWithOptions(
+      showActionSheet(
         { title: "신고 사유를 선택해주세요", options, cancelButtonIndex: options.length - 1 },
         async index => {
           const reason = REPORT_REASONS[index]

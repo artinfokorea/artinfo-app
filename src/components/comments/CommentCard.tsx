@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { ActionSheetIOS, Alert, Pressable, StyleSheet, Text, View } from "react-native"
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native"
 
 import { CommentEditor } from "@/components/comments/CommentEditor"
 import { FallbackImage } from "@/components/ui/FallbackImage"
@@ -9,6 +9,7 @@ import { useModeration } from "@/hooks/useModeration"
 import { useAuth, useRequireAuth } from "@/lib/auth"
 import filters from "@/lib/filters"
 import { COMMENT } from "@/types/comments"
+import { showActionSheet } from "@/lib/action-sheet"
 
 const filter = filters()
 
@@ -49,7 +50,7 @@ export const CommentCard = ({ comment, isChild, onDelete, onUpdate, onReply }: P
 
     const options = [...actions.map(a => a.label), "취소"]
     const destructiveIndex = actions.findIndex(a => a.destructive)
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         options,
         cancelButtonIndex: options.length - 1,

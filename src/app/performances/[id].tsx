@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import * as WebBrowser from "expo-web-browser"
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import React, { useState } from "react"
-import { ActionSheetIOS, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { ItemManageBox } from "@/components/lessons/ListParts"
 import { KakaoMapView } from "@/components/performances/KakaoMapView"
@@ -17,6 +17,7 @@ import filters from "@/lib/filters"
 import { queries } from "@/lib/queries"
 import { deletePerformance } from "@/services/performances"
 import { AREA } from "@/types/performances"
+import { showActionSheet } from "@/lib/action-sheet"
 
 const filter = filters()
 
@@ -27,15 +28,18 @@ const DetailItem = ({ title, content }: { title: string; content?: string | numb
   </View>
 )
 
-/** 지도 앱(Apple 지도 / 카카오맵)으로 열어 길찾기 */
+/** 지도 앱(iOS: Apple 지도, Android: 구글 지도 / 카카오맵)으로 열어 길찾기 */
 const openMap = (area: AREA, label: string) => {
   const name = encodeURIComponent(label)
-  const apple = `http://maps.apple.com/?ll=${area.latitude},${area.longitude}&q=${name}`
+  const system =
+    Platform.OS === "ios"
+      ? `http://maps.apple.com/?ll=${area.latitude},${area.longitude}&q=${name}`
+      : `geo:${area.latitude},${area.longitude}?q=${area.latitude},${area.longitude}(${name})`
   const kakao = `https://map.kakao.com/link/map/${name},${area.latitude},${area.longitude}`
-  ActionSheetIOS.showActionSheetWithOptions(
-    { options: ["Apple 지도", "카카오맵", "취소"], cancelButtonIndex: 2, title: label },
+  showActionSheet(
+    { options: [Platform.OS === "ios" ? "Apple 지도" : "구글 지도", "카카오맵", "취소"], cancelButtonIndex: 2, title: label },
     index => {
-      if (index === 0) Linking.openURL(apple)
+      if (index === 0) Linking.openURL(system)
       if (index === 1) Linking.openURL(kakao)
     },
   )

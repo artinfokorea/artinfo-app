@@ -54,3 +54,13 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Android 빌드·배포 (아트인포)
+
+iOS 와 같은 코드를 쓰고 Apple 로그인만 iOS 에서만 보인다. 아이콘은 `components/ui/Icon.tsx` 의 표로 SF Symbols → Ionicons/Material 로 바뀐다.
+
+- **빌드**: `gh workflow run android-release.yml` → artifact `artinfo-android-aab` 의 `artinfo.aab`. 시크릿이 모두 있으면 Play Console 내부 테스트 트랙에 자동 업로드.
+- **업로드 키** (한 번만): `ANDROID_KEYSTORE_PASSWORD=… ANDROID_KEY_PASSWORD=… scripts/android-keystore.sh` → 안내대로 `gh secret set` 4개 (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`). 키 파일은 `~/android-keys/` 에만 둔다.
+- **푸시(FCM)**: Firebase 콘솔에 Android 앱(`com.artinfokorea.app`) 추가 → `google-services.json` 을 프로젝트 루트에 두고(커밋 금지) 내용을 `GOOGLE_SERVICES_JSON` 시크릿으로. Expo 푸시 서비스가 FCM 으로 보내려면 `npx eas-cli credentials -p android` 에서 FCM V1 서비스 계정 키도 올려야 한다.
+- **Play 자동 업로드**: Play Console 에서 앱을 만들고 첫 `.aab` 는 손으로 올린 뒤, API 서비스 계정 키 JSON 을 `PLAY_SERVICE_ACCOUNT_JSON` 시크릿으로.
+- **로컬 실행**: Android Studio + SDK 설치 후 `npx expo run:android`. 서명 빌드는 `scripts/android-release.sh`.

@@ -44,7 +44,7 @@ export const PerformanceAreaModal = ({
   const hasNext = areas.length > 0 && areas.length < (data?.totalCount ?? 0)
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
+    <Modal statusBarTranslucent navigationBarTranslucent visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, padding: 20 }}>
         <View style={styles.header}>
           <Text style={styles.title}>공연장 검색</Text>

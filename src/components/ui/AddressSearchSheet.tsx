@@ -57,7 +57,7 @@ export const AddressSearchSheet = ({ visible, onClose, onSelect }: Props) => {
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal statusBarTranslucent navigationBarTranslucent visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top - 40, 12) }]}>
         <Text style={styles.title}>주소 검색</Text>
         <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="닫기">

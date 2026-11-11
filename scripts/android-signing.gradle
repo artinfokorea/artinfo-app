@@ -1,0 +1,20 @@
+// 릴리즈 서명 — CI 가 expo prebuild 뒤 android/app/build.gradle 끝에 `apply from:` 으로 붙인다 (scripts/android-release.sh).
+// 키스토어와 암호는 GitHub Secrets → 환경변수로만 들어오고 저장소에는 없다.
+def keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+if (keystorePath != null && !keystorePath.isEmpty()) {
+  android {
+    signingConfigs {
+      release {
+        storeFile file(keystorePath)
+        storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+        keyAlias System.getenv("ANDROID_KEY_ALIAS")
+        keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+      }
+    }
+    buildTypes {
+      release {
+        signingConfig signingConfigs.release
+      }
+    }
+  }
+}

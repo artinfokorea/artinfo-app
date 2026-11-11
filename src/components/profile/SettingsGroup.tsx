@@ -1,8 +1,7 @@
-import { SymbolViewProps } from "expo-symbols"
+import { IconName , Icon } from "@/components/ui/Icon"
 import React from "react"
 import { Pressable, StyleProp, StyleSheet, Switch, Text, View, ViewStyle } from "react-native"
 
-import { Icon } from "@/components/ui/Icon"
 import { colors } from "@/constants/theme"
 
 type GroupProps = {
@@ -35,7 +34,7 @@ export const SettingsGroup = ({ title, footer, children, style }: GroupProps) =>
 
 type RowProps = {
   /** SF Symbols 아이콘 — 없으면 아이콘 칸 없이 왼쪽 정렬 */
-  icon?: SymbolViewProps["name"]
+  icon?: IconName
   iconColor?: string
   label: string
   /** 오른쪽에 회색으로 보이는 값. 없으면 placeholder 를 보여준다 */

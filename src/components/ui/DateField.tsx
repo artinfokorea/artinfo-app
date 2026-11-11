@@ -1,38 +1,47 @@
-import DateTimePicker from "@react-native-community/datetimepicker"
-import dayjs from "dayjs"
-import React, { useState } from "react"
-import { Modal, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
+import DateTimePicker from "@react-native-community/datetimepicker";
+import dayjs from "dayjs";
+import React, { useState } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Icon } from "@/components/ui/Icon"
-import { Button } from "@/components/ui/primitives"
-import { colors } from "@/constants/theme"
+import { Icon } from "@/components/ui/Icon";
+import { Button } from "@/components/ui/primitives";
+import { colors } from "@/constants/theme";
 
 type Props = {
-  label?: string
-  required?: boolean
+  label?: string;
+  required?: boolean;
   /** mode="date" 이면 'YYYY-MM-DD', mode="time" 이면 'HH:mm' */
-  value?: string
-  mode?: "date" | "time"
-  onChange: (value: string) => void
-  placeholder?: string
-  error?: string
-  minimumDate?: Date
-  maximumDate?: Date
-  containerStyle?: StyleProp<ViewStyle>
+  value?: string;
+  mode?: "date" | "time";
+  onChange: (value: string) => void;
+  placeholder?: string;
+  error?: string;
+  minimumDate?: Date;
+  maximumDate?: Date;
+  containerStyle?: StyleProp<ViewStyle>;
   /** 좁은 칸용: 아이콘 없이 작은 여백 */
-  compact?: boolean
-}
+  compact?: boolean;
+};
 
-const FORMAT = { date: "YYYY-MM-DD", time: "HH:mm" } as const
+const FORMAT = { date: "YYYY-MM-DD", time: "HH:mm" } as const;
 
 const toDate = (value: string | undefined, mode: "date" | "time") => {
-  if (!value) return new Date()
-  const parsed = mode === "date" ? dayjs(value) : dayjs(`2000-01-01T${value}`)
-  return parsed.isValid() ? parsed.toDate() : new Date()
-}
+  if (!value) return new Date();
+  const parsed = mode === "date" ? dayjs(value) : dayjs(`2000-01-01T${value}`);
+  return parsed.isValid() ? parsed.toDate() : new Date();
+};
 
-/** 웹의 <input type="date|time"> 대체 — 누르면 하단 시트에 iOS 날짜/시간 선택기가 뜬다. */
+/** 웹의 <input type="date|time"> 대체 — iOS 는 하단 시트 안의 휠 선택기, Android 는 시스템 날짜/시간 대화상자가 뜬다. */
 export const DateField = ({
   label,
   required,
@@ -46,19 +55,19 @@ export const DateField = ({
   containerStyle,
   compact,
 }: Props) => {
-  const insets = useSafeAreaInsets()
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<Date>(() => toDate(value, mode))
+  const insets = useSafeAreaInsets();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Date>(() => toDate(value, mode));
 
   const openSheet = () => {
-    setDraft(toDate(value, mode))
-    setOpen(true)
-  }
+    setDraft(toDate(value, mode));
+    setOpen(true);
+  };
 
   const confirm = () => {
-    onChange(dayjs(draft).format(FORMAT[mode]))
-    setOpen(false)
-  }
+    onChange(dayjs(draft).format(FORMAT[mode]));
+    setOpen(false);
+  };
 
   return (
     <View style={[{ gap: 6 }, containerStyle]}>
@@ -71,43 +80,84 @@ export const DateField = ({
       <Pressable
         onPress={openSheet}
         accessibilityRole="button"
-        style={[styles.input, compact && styles.compact, !!error && { borderColor: colors.error }]}
+        style={[
+          styles.input,
+          compact && styles.compact,
+          !!error && { borderColor: colors.error },
+        ]}
       >
-        <Text style={[styles.value, compact && { fontSize: 15 }, !value && { color: colors.gray400 }]}>
+        <Text
+          style={[
+            styles.value,
+            compact && { fontSize: 15 },
+            !value && { color: colors.gray400 },
+          ]}
+        >
           {value || placeholder || FORMAT[mode]}
         </Text>
         {compact ? null : (
-          <Icon name={mode === "date" ? "calendar" : "clock"} size={16} color={colors.gray400} />
+          <Icon
+            name={mode === "date" ? "calendar" : "clock"}
+            size={16}
+            color={colors.gray400}
+          />
         )}
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + 12 }]}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{label ?? (mode === "date" ? "날짜 선택" : "시간 선택")}</Text>
-            <Pressable onPress={() => setOpen(false)} hitSlop={10}>
-              <Icon name="xmark" size={18} color={colors.gray500} />
-            </Pressable>
-          </View>
+      {Platform.OS === "android" ? (
+        // Android 선택기는 그 자체가 대화상자라 시트 없이 바로 띄우고, 확인/취소 이벤트로 닫는다
+        open ? (
           <DateTimePicker
             value={draft}
             mode={mode}
-            display="spinner"
-            locale="ko-KR"
             minuteInterval={mode === "time" ? 5 : undefined}
             minimumDate={minimumDate}
             maximumDate={maximumDate}
-            onChange={(_, date) => date && setDraft(date)}
-            style={{ alignSelf: "stretch" }}
+            onChange={(event, date) => {
+              setOpen(false);
+              if (event.type === "set" && date)
+                onChange(dayjs(date).format(FORMAT[mode]));
+            }}
           />
-          <Button title="확인" onPress={confirm} />
-        </View>
-      </Modal>
+        ) : null
+      ) : (
+        <Modal
+          statusBarTranslucent
+          navigationBarTranslucent
+          visible={open}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setOpen(false)}
+        >
+          <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
+          <View style={[styles.sheet, { paddingBottom: insets.bottom + 12 }]}>
+            <View style={styles.header}>
+              <Text style={styles.title}>
+                {label ?? (mode === "date" ? "날짜 선택" : "시간 선택")}
+              </Text>
+              <Pressable onPress={() => setOpen(false)} hitSlop={10}>
+                <Icon name="xmark" size={18} color={colors.gray500} />
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={draft}
+              mode={mode}
+              display="spinner"
+              locale="ko-KR"
+              minuteInterval={mode === "time" ? 5 : undefined}
+              minimumDate={minimumDate}
+              maximumDate={maximumDate}
+              onChange={(_, date) => date && setDraft(date)}
+              style={{ alignSelf: "stretch" }}
+            />
+            <Button title="확인" onPress={confirm} />
+          </View>
+        </Modal>
+      )}
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   label: { fontSize: 15, fontWeight: "600", color: colors.gray800 },
@@ -133,6 +183,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   title: { fontSize: 18, fontWeight: "700", color: colors.black },
-})
+});
