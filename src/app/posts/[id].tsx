@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/Icon"
 import { EmptyDataMessage, Loading, Separator } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
+import { UserType } from "@/types/users"
 import { useModeration } from "@/hooks/useModeration"
 import { useAuth } from "@/lib/auth"
 import filters from "@/lib/filters"
@@ -63,6 +64,7 @@ export default function PostDetailScreen() {
     )
 
   const isAuthor = !!user && user.id === post.authorId
+  const isAdmin = user?.type === UserType.ADMIN
 
   /** 남의 글: 신고·차단 메뉴 (App Store 1.2 UGC) */
   const openModerationMenu = () => {
@@ -111,9 +113,17 @@ export default function PostDetailScreen() {
               onDelete={handleDelete}
             />
           ) : (
-            <Pressable style={styles.moreButton} onPress={openModerationMenu} accessibilityLabel="신고 또는 차단" hitSlop={6}>
-              <Icon name="ellipsis" size={18} color={colors.gray700} />
-            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              {isAdmin ? (
+                // 관리자는 남의 글도 삭제할 수 있다 (커뮤니티 운영)
+                <Pressable style={styles.adminDelete} onPress={handleDelete} accessibilityLabel="관리자 삭제" hitSlop={6}>
+                  <Text style={styles.adminDeleteText}>관리자 삭제</Text>
+                </Pressable>
+              ) : null}
+              <Pressable style={styles.moreButton} onPress={openModerationMenu} accessibilityLabel="신고 또는 차단" hitSlop={6}>
+                <Icon name="ellipsis" size={18} color={colors.gray700} />
+              </Pressable>
+            </View>
           )}
         </View>
 
@@ -138,6 +148,8 @@ export default function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  adminDelete: { height: 36, paddingHorizontal: 10, borderRadius: 8, borderWidth: 2, borderColor: colors.whitesmoke, alignItems: "center", justifyContent: "center" },
+  adminDeleteText: { fontSize: 13, fontWeight: "600", color: colors.error },
   moreButton: { borderWidth: 2, borderColor: colors.whitesmoke, borderRadius: 8, padding: 8 },
   container: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 80 },
   breadcrumb: { flexDirection: "row", alignItems: "center", gap: 6 },
