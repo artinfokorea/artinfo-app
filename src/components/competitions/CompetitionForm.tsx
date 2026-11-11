@@ -1,5 +1,5 @@
 import { yupResolver } from "@hookform/resolvers/yup"
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import { Controller, FieldErrors, useForm } from "react-hook-form"
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
@@ -44,6 +44,8 @@ type Props = {
 }
 
 const STEPS = ["기본 정보", "일정", "접수·시상", "포스터"]
+/** 마지막 단계 도착 후 이 시간 안의 등록 탭은 무시한다(ms) — '다음' 연타 시 두 번째 탭이 같은 자리의 등록 버튼에 떨어지는 문제 */
+const SUBMIT_GUARD_MS = 800
 const STEP_FIELDS: (keyof CompetitionFormData)[][] = [
   ["title", "host", "organizer", "divisions", "ages", "area", "venue"],
   ["openAt", "closeAt", "heldAt", "resultAt"],
@@ -64,6 +66,7 @@ const APPLY_METHODS: { value: ApplyMethod; label: string; desc: string }[] = [
 export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => {
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
+  const lastStepAt = useRef(0)
   const { errorToast } = useToast()
   const {
     control,
@@ -131,7 +134,13 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
       errorToast("입력을 확인해 주세요.")
       return
     }
+    if (step + 1 >= STEPS.length - 1) lastStepAt.current = Date.now()
     setStep(s => Math.min(s + 1, STEPS.length - 1))
+  }
+
+  const submit = () => {
+    if (Date.now() - lastStepAt.current < SUBMIT_GUARD_MS) return
+    void handleSubmit(onSubmit, onInvalid)()
   }
 
   /** 오류가 난 필드가 어느 단계에 있는지 */
@@ -332,7 +341,7 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
           {step < STEPS.length - 1 ? (
             <Button title="다음" onPress={next} />
           ) : (
-            <Button title={competition ? "수정 완료" : "등록 요청"} loading={isLoading} onPress={() => void handleSubmit(onSubmit, onInvalid)()} />
+            <Button title={competition ? "수정 완료" : "등록 요청"} loading={isLoading} onPress={submit} />
           )}
         </View>
       </ScrollView>
