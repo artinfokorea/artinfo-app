@@ -27,6 +27,7 @@ jobs:
     timeout-minutes: 60
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
     steps:
       - uses: actions/checkout@v4
 
@@ -86,14 +87,13 @@ jobs:
 
       # iOS 와 같은 방식 — EAS Submit 큐를 거치지 않고 fastlane 으로 Play Developer API 에 직접 올린다 (내부 테스트 트랙)
       - uses: ruby/setup-ruby@v1
-        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
         with:
           ruby-version: '3.3'
 
       - name: Upload to Play internal testing
-        if: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
         env:
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           FASTLANE_SKIP_UPDATE_CHECK: '1'
         run: |
           gem install fastlane --no-document
