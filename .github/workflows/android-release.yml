@@ -38,8 +38,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
-
+      # ubuntu 러너에는 Android SDK 가 기본 설치돼 있다(ANDROID_HOME) — setup-android 액션은 'tools' 패키지 오류로 실패해 쓰지 않는다
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Install dependencies
