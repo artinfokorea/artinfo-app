@@ -45,6 +45,7 @@ export const toPayload = (d: CompetitionFormData): CompetitionPayload => ({
   prize: d.prize || undefined,
   description: d.description || undefined,
   posterUrl: d.posterUrl || undefined,
+  contentImages: d.contentImages ?? [],
 })
 
 const CreateCompetition = () => {

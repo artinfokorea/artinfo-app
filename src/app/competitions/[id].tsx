@@ -16,6 +16,8 @@ import filters from "@/lib/filters"
 import { queries } from "@/lib/queries"
 import { deleteCompetition } from "@/services/competitions"
 import { APPLY_METHOD_LABEL, COMPETITION, PHASE_LABEL } from "@/types/competitions"
+import { UserType } from "@/types/users"
+import { ContentImage } from "@/components/competitions/ContentImage"
 
 const filter = filters()
 const PHASE_PILL: Record<string, { bg: string; fg: string }> = {
@@ -51,8 +53,16 @@ export default function CompetitionDetailScreen() {
     )
 
   const isMine = !!user && user.id === c.authorId
+  const canManage = isMine || user?.type === UserType.ADMIN
   const canApply = c.phase === "OPEN" || c.phase === "SOON"
-  const applyHref = c.applyMethod === "LINK" && c.applyLink ? c.applyLink : c.applyMethod === "EMAIL" && c.email ? `mailto:${c.email}` : null
+  const applyHref =
+    c.applyMethod === "LINK" && c.applyLink
+      ? c.applyLink
+      : c.applyMethod === "EMAIL" && c.email
+        ? `mailto:${c.email}`
+        : c.applyMethod === "CONTACT" && c.tel
+          ? `tel:${c.tel.replace(/[^0-9+]/g, "")}`
+          : null
   const big =
     c.phase === "UPCOMING"
       ? { value: `D-${c.openIn}`, sub: "접수 시작까지", hot: false }
@@ -72,7 +82,7 @@ export default function CompetitionDetailScreen() {
 
   const apply = () => {
     if (!applyHref) return
-    if (applyHref.startsWith("mailto:")) void Linking.openURL(applyHref)
+    if (applyHref.startsWith("mailto:") || applyHref.startsWith("tel:")) void Linking.openURL(applyHref)
     else void WebBrowser.openBrowserAsync(applyHref)
   }
   const handleDelete = async () => {
@@ -86,16 +96,16 @@ export default function CompetitionDetailScreen() {
     ["장소", c.venue ?? "요강 참조", c.area],
     ["부문·대상", c.divisions.join(" · "), c.ages.join(" · ") || null],
     ["참가비", c.fee ?? "요강 참조", null],
-    ["접수 방법", APPLY_METHOD_LABEL[c.applyMethod], c.applyMethod === "EMAIL" ? c.email : null],
+    ["접수 방법", APPLY_METHOD_LABEL[c.applyMethod], c.applyMethod === "EMAIL" ? c.email : c.applyMethod === "CONTACT" ? c.tel : null],
   ]
 
   return (
     <>
       <Stack.Screen options={{ title: "콩쿠르", headerRight: () => <ShareButton path={`/competitions/${c.id}`} title={c.title} /> }} />
       <ScrollView contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}>
-        {isMine ? (
+        {canManage ? (
           <View style={styles.ownerBox}>
-            <Text style={styles.ownerText}>내가 등록한 공고{c.status === "REVIEW" ? " · 검토 중 (나에게만 보여요)" : ` · 조회 ${c.viewCount}`}</Text>
+            <Text style={styles.ownerText}>{isMine ? "내가 등록한 공고" : "관리자"}{c.status === "REVIEW" ? " · 검토 중 (등록자에게만 보여요)" : ` · 조회 ${c.viewCount}`}</Text>
             <ItemManageBox
               onEdit={() => router.push({ pathname: "/competitions/create", params: { id: String(c.id) } })}
               onDelete={handleDelete}
@@ -105,16 +115,16 @@ export default function CompetitionDetailScreen() {
           </View>
         ) : null}
 
+        <View style={styles.posterWrap}>
+          <CompetitionPoster competition={c} />
+        </View>
         <View style={styles.head}>
-          <View style={{ width: 100 }}>
-            <CompetitionPoster competition={c} />
-          </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={styles.row}>
               <View style={[styles.pill, { backgroundColor: PHASE_PILL[c.phase].bg }]}>
                 <Text style={[styles.pillText, { color: PHASE_PILL[c.phase].fg }]}>{PHASE_LABEL[c.phase]}</Text>
               </View>
-              <Text style={c.source === "OWNER" ? styles.ownerSrc : styles.crawlSrc}>{c.source === "OWNER" ? `✓ 주최 등록${c.verified ? " · 인증" : ""}` : "수집 공고"}</Text>
+              {c.source === "OWNER" ? <Text style={styles.ownerSrc}>✓ 주최 등록{c.verified ? " · 인증" : ""}</Text> : null}
             </View>
             <Text style={styles.title}>{c.title}</Text>
             <Text style={styles.host}>
@@ -172,20 +182,23 @@ export default function CompetitionDetailScreen() {
           </View>
         ) : null}
 
+        {c.contentImages?.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>공고 내용</Text>
+            <View style={{ gap: 12 }}>
+              {c.contentImages.map(url => (
+                <ContentImage key={url} url={url} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>문의</Text>
           <Text style={styles.contact}>주최 · {c.host}</Text>
           {c.tel ? <Text style={styles.contact}>전화 · {c.tel}</Text> : null}
           {c.email ? <Text style={styles.contact}>이메일 · {c.email}</Text> : null}
         </View>
-
-        {c.source === "CRAWL" && c.sourceUrl ? (
-          <Pressable onPress={() => void WebBrowser.openBrowserAsync(c.sourceUrl!)} style={styles.srcBox}>
-            <Text style={styles.srcText}>
-              <Text style={{ fontWeight: "700", color: colors.ink3 }}>수집 공고</Text> · 내용이 바뀌었을 수 있으니 접수 전 <Text style={{ color: colors.tagText, fontWeight: "600" }}>원문 보기 ↗</Text>로 확인해 주세요.
-            </Text>
-          </Pressable>
-        ) : null}
         <Text style={styles.fine}>접수는 주최 측에서 진행합니다. 아트인포는 접수를 대행하지 않으며 참가비를 받지 않습니다.</Text>
       </ScrollView>
 
@@ -195,7 +208,7 @@ export default function CompetitionDetailScreen() {
           <Text style={styles.ctaSub}>{big.sub}</Text>
         </View>
         {canApply && applyHref ? (
-          <Button title={c.applyMethod === "EMAIL" ? "이메일로 접수하기" : "접수처 바로가기"} onPress={apply} style={{ flex: 1 }} />
+          <Button title={c.applyMethod === "EMAIL" ? "이메일로 접수하기" : c.applyMethod === "CONTACT" ? `전화 문의 ${c.tel}` : "접수처 바로가기"} onPress={apply} style={{ flex: 1 }} />
         ) : (
           <Button
             title={canApply ? `접수 방법: ${APPLY_METHOD_LABEL[c.applyMethod]}` : c.phase === "UPCOMING" ? "아직 접수 전이에요" : "접수가 끝났어요"}
@@ -213,12 +226,12 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 120 },
   ownerBox: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.tagBg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 },
   ownerText: { flex: 1, fontSize: 13, fontWeight: "600", color: colors.tagText },
+  posterWrap: { alignSelf: "center", width: "100%", maxWidth: 360, marginBottom: 16 },
   head: { flexDirection: "row", gap: 14 },
   row: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
   pill: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
   pillText: { fontSize: 12, fontWeight: "700" },
   ownerSrc: { fontSize: 11, fontWeight: "700", color: colors.tagText },
-  crawlSrc: { fontSize: 11, color: colors.coolgray },
   title: { marginTop: 6, fontSize: 19, fontWeight: "800", lineHeight: 26, color: colors.ink },
   host: { marginTop: 4, fontSize: 14, color: colors.ink3 },
   tag: { backgroundColor: colors.surface2, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
@@ -241,8 +254,6 @@ const styles = StyleSheet.create({
   stepDate: { fontSize: 11, color: colors.muted, marginTop: 2 },
   prose: { fontSize: 14, lineHeight: 24, color: colors.ink3 },
   contact: { fontSize: 14, lineHeight: 22, color: colors.ink3 },
-  srcBox: { marginTop: 22, backgroundColor: colors.surface2, borderRadius: 12, padding: 12 },
-  srcText: { fontSize: 13, lineHeight: 20, color: colors.muted },
   fine: { marginTop: 16, fontSize: 12, lineHeight: 18, color: colors.coolgray },
   cta: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.white },
   ctaBig: { fontSize: 17, fontWeight: "800", color: colors.ink },

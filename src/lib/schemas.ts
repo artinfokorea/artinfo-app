@@ -284,7 +284,7 @@ export const competitionSchema = yup.object({
   ),
   heldAt: yup.string().default("").test("date", "YYYY-MM-DD 형식으로 입력해주세요.", v => !v || /^\d{4}-\d{2}-\d{2}$/.test(v)),
   resultAt: yup.string().default("").test("date", "YYYY-MM-DD 형식으로 입력해주세요.", v => !v || /^\d{4}-\d{2}-\d{2}$/.test(v)),
-  applyMethod: yup.mixed<"LINK" | "EMAIL" | "POST">().oneOf(["LINK", "EMAIL", "POST"]).required("접수 방법을 선택해주세요."),
+  applyMethod: yup.mixed<"LINK" | "EMAIL" | "POST" | "CONTACT">().oneOf(["LINK", "EMAIL", "POST", "CONTACT"]).required("접수 방법을 선택해주세요."),
   applyLink: yup
     .string()
     .default("")
@@ -304,4 +304,5 @@ export const competitionSchema = yup.object({
   prize: yup.string().max(1000).default(""),
   description: yup.string().max(3000).default(""),
   posterUrl: yup.string().default(""),
+  contentImages: yup.array().of(yup.string().required()).max(20, "본문 이미지는 20장까지 올릴 수 있습니다.").default([]),
 })

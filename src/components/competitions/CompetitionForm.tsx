@@ -4,7 +4,9 @@ import { Controller, FieldErrors, useForm } from "react-hook-form"
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 
 import { FieldError } from "@/components/jobs/FormFields"
-import { ImagePickerField } from "@/components/ui/ImagePickerField"
+import { ImagePickerField, pickAndUploadImages } from "@/components/ui/ImagePickerField"
+import { FallbackImage } from "@/components/ui/FallbackImage"
+import { Icon } from "@/components/ui/Icon"
 import { Button, Chip, TextField } from "@/components/ui/primitives"
 import { useToast } from "@/components/ui/Toast"
 import { colors } from "@/constants/theme"
@@ -32,6 +34,7 @@ export type CompetitionFormData = {
   prize: string
   description: string
   posterUrl: string
+  contentImages: string[]
 }
 
 type Props = {
@@ -45,12 +48,13 @@ const STEP_FIELDS: (keyof CompetitionFormData)[][] = [
   ["title", "host", "organizer", "divisions", "ages", "area", "venue"],
   ["openAt", "closeAt", "heldAt", "resultAt"],
   ["applyMethod", "applyLink", "email", "tel", "fee", "prize"],
-  ["posterUrl", "description"],
+  ["posterUrl", "contentImages", "description"],
 ]
 const APPLY_METHODS: { value: ApplyMethod; label: string; desc: string }[] = [
   { value: "LINK", label: "주최 홈페이지·접수 폼 링크", desc: "참가자가 외부 페이지에서 접수합니다" },
   { value: "EMAIL", label: "이메일 접수", desc: "참가 신청서를 메일로 받습니다" },
   { value: "POST", label: "우편·방문 접수", desc: "주소와 안내를 소개란에 적어 주세요" },
+  { value: "CONTACT", label: "전화 등 주최에 직접 문의", desc: "접수 링크·이메일 없이 전화번호와 안내만 적습니다" },
 ]
 
 /**
@@ -90,6 +94,7 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
       prize: competition?.prize ?? "",
       description: competition?.description ?? "",
       posterUrl: competition?.posterUrl ?? "",
+      contentImages: competition?.contentImages ?? [],
     },
   })
 
@@ -97,6 +102,24 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
   const ages = watch("ages") ?? []
   const area = watch("area")
   const applyMethod = watch("applyMethod")
+  const contentImages = watch("contentImages") ?? []
+  const [uploadingContent, setUploadingContent] = useState(false)
+
+  const addContentImages = async () => {
+    if (contentImages.length >= 20) {
+      errorToast("본문 이미지는 20장까지 올릴 수 있습니다.")
+      return
+    }
+    try {
+      setUploadingContent(true)
+      const urls = await pickAndUploadImages(UploadTarget.JOB, 20 - contentImages.length)
+      if (urls.length) setValue("contentImages", [...contentImages, ...urls], { shouldDirty: true })
+    } catch {
+      errorToast("이미지 업로드에 실패했습니다.")
+    } finally {
+      setUploadingContent(false)
+    }
+  }
 
   const toggle = (key: "divisions" | "ages", value: string) => {
     const current = watch(key) ?? []
@@ -263,6 +286,27 @@ export const CompetitionForm = ({ competition, isLoading, onSubmit }: Props) => 
               )}
             />
             <Text style={[styles.hint, { marginBottom: 14 }]}>포스터가 없으면 부문 색 바탕에 부문·연도가 대신 보입니다.</Text>
+            <Text style={styles.label}>
+              본문 이미지 <Text style={styles.hint}>공고문·요강 그림, 20장까지</Text>
+            </Text>
+            <View style={[styles.chips, { marginBottom: 14 }]}>
+              {contentImages.map((url, index) => (
+                <View key={url} style={styles.thumb}>
+                  <FallbackImage src={url} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  <Pressable
+                    onPress={() => setValue("contentImages", contentImages.filter((_, i) => i !== index), { shouldDirty: true })}
+                    style={styles.thumbRemove}
+                    hitSlop={6}
+                    accessibilityLabel="삭제"
+                  >
+                    <Icon name="xmark" size={10} color={colors.white} weight="bold" />
+                  </Pressable>
+                </View>
+              ))}
+              <Pressable onPress={addContentImages} disabled={uploadingContent || contentImages.length >= 20} style={styles.thumbAdd}>
+                <Text style={styles.thumbAddText}>{uploadingContent ? "올리는 중…" : "+ 추가"}</Text>
+              </Pressable>
+            </View>
             {text("description", { label: "소개·안내 문구", multiline: true, placeholder: "대회 소개, 심사 방식, 과제곡 안내, 우편 접수 주소 등" })}
             <View style={[styles.callout, { backgroundColor: "#FFF3E0" }]}>
               <Text style={[styles.calloutText, { color: "#9A5B00" }]}>이미 수집된 같은 대회가 있으면 등록 후 그 공고와 합쳐지고, 이 등록본이 대표로 보입니다.</Text>
@@ -317,6 +361,10 @@ const styles = StyleSheet.create({
   radioLabel: { fontSize: 14, fontWeight: "600", color: colors.ink },
   radioDesc: { fontSize: 13, color: colors.muted, marginTop: 2 },
   nav: { flexDirection: "row", justifyContent: "space-between", gap: 10, marginTop: 20 },
+  thumb: { width: 72, height: 96, borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+  thumbRemove: { position: "absolute", right: 4, top: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: "rgba(25,31,40,0.7)", alignItems: "center", justifyContent: "center" },
+  thumbAdd: { width: 72, height: 96, borderRadius: 8, borderWidth: 1, borderStyle: "dashed", borderColor: colors.lightgray, backgroundColor: colors.surface2, alignItems: "center", justifyContent: "center" },
+  thumbAddText: { fontSize: 13, fontWeight: "600", color: colors.muted },
   errorBox: { marginTop: 16, borderWidth: 1, borderColor: "#F5C2C7", backgroundColor: "#FDECEC", borderRadius: 12, padding: 12, gap: 4 },
   errorTitle: { fontSize: 13, fontWeight: "700", color: "#B42318", marginBottom: 2 },
   errorItem: { fontSize: 13, lineHeight: 20, color: "#B42318", textDecorationLine: "underline" },

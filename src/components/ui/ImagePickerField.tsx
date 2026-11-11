@@ -32,6 +32,17 @@ export const pickAndUploadImage = async (
   return uploaded.images[0]?.url ?? null
 }
 
+/** 사진 보관함에서 여러 장을 고르고 올린 뒤 URL 목록을 돌려준다 (본문 이미지) */
+export const pickAndUploadImages = async (target: UploadTarget, limit = 10): Promise<string[]> => {
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8, allowsMultipleSelection: true, selectionLimit: limit })
+  if (result.canceled || !result.assets?.length) return []
+  const uploaded = await uploadImages(
+    target,
+    result.assets.map((asset, i) => ({ uri: asset.uri, name: asset.fileName ?? `image_${Date.now()}_${i}.jpg`, type: asset.mimeType ?? "image/jpeg" })),
+  )
+  return uploaded.images.map(image => image.url).filter((url): url is string => !!url)
+}
+
 type Props = {
   label?: string
   value?: string
