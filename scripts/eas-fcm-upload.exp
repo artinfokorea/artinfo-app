@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+# EAS 에 Android FCM V1 서비스 계정 키 등록 — eas credentials 의 대화형 메뉴를 자동으로 고른다.
+# 사용: scripts/eas-fcm-upload.exp <Firebase 서비스 계정 키.json>
+# 메뉴: production → Google Service Account → Manage ... FCM V1 → Set up → (Upload new) → 파일 경로
+set key [lindex $argv 0]
+set timeout 60
+spawn npx eas-cli@latest credentials -p android
+expect -re "build profile" { send "\r" }
+expect -re "Use arrow-keys" { sleep 1; send "\033\[B"; sleep 0.5; send "\r" }
+expect -re "Manage your Google Service Account Key for Play Store" { sleep 1; send "\033\[B"; sleep 0.5; send "\r" }
+sleep 3
+send "\r"
+sleep 3
+expect {
+  -re "Path to Google Service Account file" { send "$key\r"; sleep 10 }
+  -re "Use arrow-keys" { send "\r"; sleep 3; exp_continue }
+  timeout {}
+}
+send "\003"
+expect eof
