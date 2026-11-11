@@ -56,3 +56,7 @@ google-services.json
 
 # Play 제출용 서비스 계정 키 (온기와 같은 이름)
 google-play-service-account.json
+
+# 로컬 빌드 산출물
+*.apk
+*.aab
