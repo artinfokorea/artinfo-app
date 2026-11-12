@@ -45,6 +45,8 @@ export const pickAndUploadImages = async (target: UploadTarget, limit = 10): Pro
 
 type Props = {
   label?: string
+  /** 라벨 아래 보조 설명 — 선택 항목 안내 등 */
+  hint?: string
   value?: string
   onChange: (url: string) => void
   target: UploadTarget
@@ -57,6 +59,7 @@ type Props = {
 /** 웹 components/common/ImageField 대체: 미리보기 + 탭해서 업로드 */
 export const ImagePickerField = ({
   label,
+  hint,
   value,
   onChange,
   target,
@@ -83,6 +86,7 @@ export const ImagePickerField = ({
   return (
     <View style={[{ gap: 6 }, style]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
+      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <Pressable onPress={onPress} style={[styles.box, { aspectRatio }, !!error && { borderColor: colors.error }]}>
         {value ? (
           <FallbackImage src={value} style={StyleSheet.absoluteFill} contentFit="cover" />
@@ -105,6 +109,7 @@ export const ImagePickerField = ({
 
 const styles = StyleSheet.create({
   label: { fontSize: 15, fontWeight: "600", color: colors.gray800 },
+  hint: { fontSize: 13, color: colors.gray500, marginTop: -2 },
   box: {
     width: "100%",
     borderRadius: 12,
