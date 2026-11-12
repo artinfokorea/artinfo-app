@@ -79,7 +79,6 @@ export const FullTimeJobForm = ({ onSubmit, isLoading, job, withImage = true }: 
             render={({ field }) => (
               <ImagePickerField
                 label="대표 이미지 (선택)"
-                hint="없어도 등록할 수 있어요. 올리면 목록에서 공고가 더 눈에 띕니다."
                 value={field.value || ""}
                 onChange={field.onChange}
                 target={UploadTarget.JOB}
