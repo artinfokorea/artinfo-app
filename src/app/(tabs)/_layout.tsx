@@ -8,9 +8,10 @@ import { colors } from "@/constants/theme"
 
 /**
  * 탭 아이콘 크기. Android 의 Ionicons 채움 글리프는 SF Symbols 와 달리 상자를 꽉 채워 같은 수치면 훨씬 커 보인다
- * (Icon 이 벡터 아이콘을 1.1배 키우는 것까지 겹침) → Android 는 작게 준다.
+ * (Icon 이 벡터 아이콘을 1.1배 키우는 것까지 겹침) → Android 는 16 으로 주면 실제 18px 로 그려져
+ * 웹 모바일 하단 내비(heroicons 20px 상자, 글리프 약 17px)와 비슷한 시각 크기가 된다.
  */
-const TAB_ICON_SIZE = Platform.select({ ios: 22, default: 18 })
+const TAB_ICON_SIZE = Platform.select({ ios: 22, default: 16 })
 
 /**
  * 하단 탭: 홈 · 채용 · 소식(나눔·콩쿠르·뉴스) · 레슨 · 공연 — 웹 모바일 BottomNavigation 과 같은 구성.
